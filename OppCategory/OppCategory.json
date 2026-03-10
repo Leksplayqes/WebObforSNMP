@@ -1,0 +1,873 @@
+{
+  "DevSettings": {
+    "IP": "192.168.125.39",
+    "BlockList": {
+      "Free": 7,
+      "MKv1": 2,
+      "DWDM40v1": 3,
+      "DWDM401v1": 5,
+      "OUv1": 8,
+      "MV2Mv1": 10,
+      "MVPv1": 13,
+      "MASv1": 12
+    },
+    "SlotQuantRelayLabel": {
+      "MKv1": 2,
+      "DWDM40v1": 40,
+      "DWDM401v1": 40,
+      "OUv1": 2,
+      "MASv1": 16,
+      "TP510Gv1": 5,
+      "MX210Gv1": 2
+    }
+  },
+  "Category": {
+    "MVPv1": {
+      "stOppMVPv1TempAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.1.1.2.1.3.",
+        2,
+        1
+      ],
+      "stOppMVPv1AlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.1.1.3.1.3.",
+        12,
+        1
+      ]
+    },
+    "MASv1": {
+      "stOppMASv1AlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.3.1.3.1.4.",
+        1,
+        2
+      ]
+    },
+    "MKv1": {
+      "stOppMKv1PowerAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.4.1.2.1.3.",
+        6,
+        1
+      ],
+      "stOppMKv1TempAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.4.1.3.1.3.",
+        2,
+        1
+      ],
+      "stOppMKv1LanTxDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.4.1.4.1.5.",
+        1,
+        2
+      ],
+      "stOppMKv1LanFxDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.4.1.5.1.15.",
+        4,
+        2
+      ]
+    },
+    "MX210Gv1": {
+      "stOppMX210Gv1PowerAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.1.2.1.3.",
+        6,
+        1
+      ],
+      "stOppMX210Gv1TempAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.1.3.1.4.",
+        2,
+        2
+      ],
+      "stOppMX210Gv1CompPortDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.2.1.2.1.12.",
+        4,
+        2
+      ],
+      "stOppMX210Gv1CompSfpDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.2.2.2.1.15.",
+        5,
+        2
+      ],
+      "stOppMX210Gv1TribODU1DataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.3.1.2.1.15.",
+        8,
+        4
+      ],
+      "stOppMX210Gv1TribODU0DataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.3.2.2.1.15.",
+        8,
+        4
+      ],
+      "stOppMX210Gv1TribOPU1DataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.3.3.2.1.7.",
+        3,
+        3
+      ],
+      "stOppMX210Gv1TribOPU0DataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.3.4.2.1.7.",
+        2,
+        3
+      ],
+      "stOppMX210Gv1GroupSfpDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.4.1.2.1.21.",
+        5,
+        2
+      ],
+      "stOppMX210Gv1GroupOTUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.4.2.2.1.13.",
+        10,
+        2
+      ],
+      "stOppMX210Gv1GroupODUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.4.3.2.1.14.",
+        8,
+        3
+      ],
+      "stOppMX210Gv1GroupOPUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.2.2.1.9.",
+        7,
+        3
+      ],
+      "stOppPMOpticCI15mAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.2.2.1.8.",
+        7,
+        3
+      ],
+      "stOppPMOpticCI24hmAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.2.2.1.9.",
+        7,
+        3
+      ],
+      "stOppPMLaserCI15mAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.3.2.1.8.",
+        7,
+        4
+      ],
+      "stOppPMLaserCI24hAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.3.2.1.9.",
+        7,
+        4
+      ],
+      "stOppPMebcFECv1CI15mAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.4.2.1.8.",
+        3,
+        3
+      ],
+      "stOppPMebcFECv1CI24hAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.4.2.1.9.",
+        3,
+        3
+      ],
+      "stOppPMebcOTUv1CI15mAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.5.2.1.8.",
+        4,
+        5
+      ],
+      "stOppPMebcOTUv1CI24hAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.5.2.1.9.",
+        4,
+        5
+      ],
+      "stOppPMebcODUv1CI15mAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.7.2.1.8.",
+        7,
+        4
+      ],
+      "stOppPMebcODUv1CI24hAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.7.2.1.8.",
+        7,
+        4
+      ],
+      "stOppPMebcSDHCI15mAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.9.2.1.8",
+        3,
+        5
+      ],
+      "stOppPMebcSDHCI24hAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.9.2.1.9",
+        3,
+        5
+      ],
+      "stOppPMEthBaseCI15mAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.10.2.1.8.",
+        3,
+        13
+      ],
+      "stOppPMEthBaseCI24hAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.10.2.1.9.",
+        3,
+        13
+      ],
+      "stOppPMEthEnhCI15mAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.10.2.1.8.",
+        3,
+        13
+      ],
+      "stOppPMEthEnhCI24hAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.10.2.1.9.",
+        3,
+        13
+      ]
+    },
+    "MV2Mv1": {
+      "stOppMV2Mv1ConfFanPowerControlAlarmCategory": [
+        "1.3.6.1.4.1.5756.9.1.2.14.1.2.1.10.",
+        1,
+        1
+      ],
+      "stOppMV2Mv1FanLifeStateAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.14.1.2.1.8.",
+        2,
+        1
+      ],
+      "stOppMV2Mv1PowerAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.14.1.2.1.11.",
+        3,
+        1
+      ],
+      "stOppMV2Mv1TempAlarmCategory": [
+        "1.3.6.1.4.1.5756.9.1.2.14.1.3.1.4.",
+        2,
+        2
+      ],
+      "stOppMV2Mv1RPMAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.14.1.4.1.3.",
+        6,
+        1
+      ],
+      "stOppMV2Mv1PWRAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.14.1.4.1.4.",
+        6,
+        1
+      ]
+    },
+    "TP510Gv1": {
+      "stOppTP510Gv1PowerAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.1.2.1.3.",
+        6,
+        1
+      ],
+      "stOppTP510Gv1TempAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.1.3.1.4.",
+        2,
+        2
+      ],
+      "stOppTP510Gv1CompSfpDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.2.2.1.20.",
+        5,
+        2
+      ],
+      "stOppTP510Gv1CompStmDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.3.2.1.7.",
+        3,
+        2
+      ],
+      "stOppTP510Gv1CompEthDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.4.2.1.7.",
+        4,
+        2
+      ],
+      "stOppTP510Gv1CompOTUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.5.2.1.11.",
+        10,
+        2
+      ],
+      "stOppTP510Gv1CompODUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.6.2.1.14.",
+        8,
+        3
+      ],
+      "stOppTP510Gv1CompOPUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.7.2.1.5.",
+        1,
+        2
+      ],
+      "stOppTP510Gv1LineSfpDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.2.2.1.20.",
+        5,
+        2
+      ],
+      "stOppTP510Gv1LineOTUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.3.2.1.11.",
+        10,
+        2
+      ],
+      "stOppTP510Gv1LineODUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.4.2.1.14.",
+        8,
+        3
+      ],
+      "stOppTP510Gv1LineOPUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.5.2.1.5.",
+        2,
+        2
+      ]
+    },
+    "MX100GCv1": {
+      "stOppMX100GCv1PowerAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.1.2.1.3.",
+        6,
+        1
+      ],
+      "stOppMX100GCv1TempAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.1.3.1.4.",
+        2,
+        2
+      ],
+      "stOppMX100GCv1CompSfpDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.2.2.1.20.",
+        5,
+        2
+      ],
+      "stOppMX100GCv1CompStmDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.3.2.1.7.",
+        3,
+        2
+      ],
+      "stOppMX100GCv1CompEthDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.4.2.1.7.",
+        4,
+        2
+      ],
+      "stOppMX100GCv1CompOTUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.5.2.1.11.",
+        10,
+        2
+      ],
+      "stOppMX100GCv1CompODUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.6.2.1.14.",
+        8,
+        3
+      ],
+      "stOppMX100GCv1CompOPUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.7.2.1.5.",
+        1,
+        2
+      ],
+      "stOppMX100GCv1LineOTUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.4.2.2.1.11.",
+        10,
+        1
+      ],
+      "stOppMX100GCv1LineODUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.4.3.2.1.14.",
+        8,
+        2
+      ],
+      "stOppMX100GCv1LineOPUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.4.4.2.1.5.",
+        2,
+        1
+      ],
+      "stOppMX100GCv1TribODUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.5.1.2.1.14.",
+        8,
+        3
+      ],
+      "stOppMX100GCv1TribOPUDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.5.2.2.1.6.",
+        3,
+        2
+      ],
+      "stOppPMOpticCI15mAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.2.2.1.8.",
+        7,
+        3
+      ],
+      "stOppPMOpticCI24hAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.2.2.1.9.",
+        7,
+        3
+      ],
+      "stOppPMLaserCI15mAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.3.2.1.8.",
+        7,
+        4
+      ],
+      "stOppPMLaserCI24hAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.3.2.1.9.",
+        7,
+        4
+      ],
+      "stOppPMebcFECv1CI15mAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.4.2.1.8.",
+        3,
+        3
+      ],
+      "stOppPMebcFECv1CI24hAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.4.4.2.1.9.",
+        3,
+        3
+      ]
+    },
+    "OUv1": {
+      "stOppOUv1PowerAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.12.1.2.1.4.",
+        6,
+        1
+      ],
+      "stOppOUv1TempAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.12.1.3.1.3.",
+        2,
+        1
+      ],
+      "stOppSubEdfaBOOSTv1DataCategoryHardAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.3.2.1.2.1.27.",
+        4,
+        2
+      ],
+      "stOppSubEdfaBOOSTv1DataCategoryAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.3.2.1.2.1.28.",
+        8,
+        2
+      ],
+      "stOppSubOSCv1DataCategoryAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.3.3.1.2.1.15.",
+        4,
+        2
+      ]
+    },
+    "ROADMv1": {
+      "stOppROADMv1PowerAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.13.1.1.2.1.3.",
+        6,
+        1
+      ],
+      "stOppROADMv1TempAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.13.1.1.3.1.3.",
+        2,
+        1
+      ],
+      "stOppROADMv1Temp2Category": [
+        ".1.3.6.1.4.1.5756.9.1.2.13.1.1.4.1.7.",
+        2,
+        1
+      ],
+      "stOppROADMv1ChannelGroupRxDataCategoryAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.13.1.3.2.1.13.",
+        2,
+        2
+      ],
+      "stOppROADMv1ChannelGroupTxDataCategoryAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.13.1.3.2.1.14.",
+        2,
+        2
+      ]
+    },
+    "DWDM40v1": {
+      "stOppDWDM40v1PowerAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.5.1.1.2.1.3.",
+        6,
+        1
+      ],
+      "stOppDWDM40v1TempAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.5.1.1.3.1.3.",
+        2,
+        1
+      ],
+      "stOppDWDM40v1channelDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.5.1.3.2.1.8.",
+        2,
+        4
+      ]
+    },
+    "DWDM401v1": {
+      "stOppDWDM401v1PowerAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.9.1.1.2.1.3.",
+        6,
+        1
+      ],
+      "stOppDWDM401v1TempAlarmCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.9.1.1.3.1.3.",
+        2,
+        1
+      ],
+      "stOppDWDM401v1ChannelDataCategory": [
+        ".1.3.6.1.4.1.5756.9.1.2.9.1.2.2.1.8.",
+        2,
+        4
+      ]
+    }
+  },
+  "MaskAlarm": {
+    "MKv1": {
+      "stOppMKv1LanFxMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.4.1.5.1.5.",
+        2
+      ]
+    },
+    "MX210Gv1": {
+      "stOppMX210Gv1CompPortMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.2.1.2.1.5.",
+        2
+      ],
+      "stOppMX210Gv1CompSfpMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.2.2.2.1.4.",
+        2
+      ],
+      "stOppMX210Gv1TribODU1MaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.3.1.2.1.6.",
+        4
+      ],
+      "stOppMX210Gv1TribODU0MaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.3.2.2.1.6.",
+        4
+      ],
+      "stOppMX210Gv1TribOPU1MaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.3.3.2.1.6.",
+        3
+      ],
+      "stOppMX210Gv1TribOPU0MaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.3.4.2.1.6.",
+        3
+      ],
+      "stOppMX210Gv1GroupSfpMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.4.1.2.1.5.",
+        2
+      ],
+      "stOppMX210Gv1GroupOTUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.4.2.2.1.5.",
+        2
+      ],
+      "stOppMX210Gv1GroupODUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.4.3.2.1.5.",
+        3
+      ],
+      "stOppMX210Gv1GroupOPUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.4.4.2.1.5.",
+        2
+      ]
+    },
+    "MX100GCv1": {
+      "stOppMX100GCv1CompSfpMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.2.2.1.4.",
+        2
+      ],
+      "stOppMX100GCv1CompStmMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.3.2.1.4.",
+        2
+      ],
+      "stOppMX100GCv1CompEthMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.4.2.1.4.",
+        2
+      ],
+      "stOppMX100GCv1CompOTUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.5.2.1.4.",
+        2
+      ],
+      "stOppMX100GCv1CompODUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.6.2.1.4.",
+        3
+      ],
+      "stOppMX100GCv1CompOPUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.3.7.2.1.4.",
+        2
+      ],
+      "stOppMX100GCv1LineOTUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.4.2.2.1.4.",
+        1
+      ],
+      "stOppMX100GCv1LineODUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.4.3.2.1.4.",
+        2
+      ],
+      "stOppMX100GCv1LineOPUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.4.4.2.1.4.",
+        1
+      ],
+      "stOppMX100GCv1TribODUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.5.1.2.1.5.",
+        3
+      ],
+      "stOppMX100GCv1TribOPUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.11.1.5.2.2.1.5.",
+        2
+      ]
+    },
+    "TP510Gv1": {
+      "stOppTP510Gv1CompSfpMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.2.2.1.4.",
+        2
+      ],
+      "stOppTP510Gv1CompStmMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.3.2.1.4.",
+        2
+      ],
+      "stOppTP510Gv1CompEthMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.4.2.1.4.",
+        2
+      ],
+      "stOppTP510Gv1CompOTUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.5.2.1.4.",
+        2
+      ],
+      "stOppTP510Gv1CompODUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.6.2.1.4.",
+        3
+      ],
+      "stOppTP510Gv1CompOPUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.7.2.1.4.",
+        2
+      ],
+      "stOppTP510Gv1LineSfpMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.2.2.1.4.",
+        2
+      ],
+      "stOppTP510Gv1LineOTUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.3.2.1.4.",
+        2
+      ],
+      "stOppTP510Gv1LineODUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.4.2.1.4.",
+        3
+      ],
+      "stOppTP510Gv1LineOPUMaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.5.2.1.4.",
+        2
+      ]
+    },
+    "OUv1": {
+      "stOppSubOSCv1MaskAlarm": [
+        ".1.3.6.1.4.1.5756.9.1.3.3.1.2.1.4.",
+        2
+      ]
+    }
+  },
+  "RelayLabel": {
+    "MASv1": {
+      "stOppMASv1SetSensorLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.3.1.3.1.7.",
+        2
+      ],
+      "stOppMASv1SetRelayLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.3.1.3.1.8.",
+        2
+      ]
+    },
+    "MKv1": {
+      "stOppMKv1LanTxLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.4.1.4.1.6.",
+        2
+      ],
+      "stOppMKv1LanTxDataCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.4.1.4.1.7.",
+        2
+      ],
+      "stOppMKv1LanFxLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.4.1.5.1.16.",
+        2
+      ],
+      "stOppMKv1LanFxDataCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.4.1.5.1.17.",
+        2
+      ]
+    },
+    "DWDM40v1": {
+      "stOppDWDM40v1channelLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.5.1.3.2.1.9.",
+        4
+      ],
+      "stOppDWDM40v1channelDataCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.5.1.3.2.1.10.",
+        4
+      ]
+    },
+    "DWDM401v1": {
+      "stOppDWDM401v1channelLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.9.1.2.2.1.9.",
+        4
+      ],
+      "stOppDWDM401v1channelDataCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.9.1.2.2.1.10.",
+        4
+      ]
+    },
+    "MX210Gv1": {
+      "stOppMX210Gv1CompPortDataCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.2.1.2.1.14.",
+        2
+      ],
+      "stOppMX210Gv1CompPortLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.2.1.2.1.13.",
+        2
+      ],
+      "stOppMX210Gv1GroupOTULabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.4.2.2.1.14.",
+        2
+      ],
+      "stOppMX210Gv1GroupOTUDataCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.4.2.2.1.16.",
+        2
+      ]
+    },
+    "OUv1": {
+      "stOppOUSubSlotV1InputLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.12.1.100.2.1.7.",
+        2
+      ],
+      "stOppOUSubSlotV1OutputLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.12.1.100.2.1.8.",
+        2
+      ],
+      "stOppOUSubSlotV1InputDataCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.12.1.100.2.1.9.",
+        2
+      ],
+      "stOppOUSubSlotV1OutputDataCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.12.1.100.2.1.10.",
+        2
+      ]
+    },
+    "TP410Gv1": {
+      "stOppTP510Gv1CompPortLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.1.1.1.5.",
+        2
+      ],
+      "stOppTP510Gv1CompPortCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.1.1.1.6.",
+        2
+      ],
+      "stOppTP510Gv1LinePortLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.1.1.1.5.",
+        2
+      ],
+      "stOppTP510Gv1LinePortCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.1.1.1.6.",
+        2
+      ]
+    },
+    "TP510Gv1": {
+      "stOppTP510Gv1CompPortLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.1.1.1.5.",
+        2
+      ],
+      "stOppTP510Gv1CompPortCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.2.1.1.1.6.",
+        2
+      ],
+      "stOppTP510Gv1LinePortLabel": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.1.1.1.5.",
+        2
+      ],
+      "stOppTP510Gv1LinePortCable": [
+        ".1.3.6.1.4.1.5756.9.1.2.15.1.3.1.1.1.6.",
+        2
+      ]
+    }
+  },
+  "CliCategory": {
+    "MX210Gv1": {
+      "comp 1 port alarm category": 4,
+      "comp 1 sfp alarm category": 5,
+      "group 1 odu alarm category": 8,
+      "group 1 opu alarm category": 2,
+      "group 1 otu alarm category": 10,
+      "group 1 sfp alarm category": 5,
+      "mx10g power alarm category": 6,
+      "mx10g pwunit 1 alarm category": 6,
+      "mx10g therm 1 alarm category": 2,
+      "stat comp 1 eth 15m alarm category": 13,
+      "stat comp 1 eth 24h alarm category": 13,
+      "stat comp 1 laser 15m alarm category": 7,
+      "stat comp 1 laser 24h alarm category": 7,
+      "stat comp 1 optic 15m alarm category": 7,
+      "stat comp 1 optic 24h alarm category": 7,
+      "stat comp 1 sdh 15m alarm category": 5,
+      "stat comp 1 sdh 24h alarm category": 5,
+      "stat line 1 fec 15m alarm category": 3,
+      "stat line 1 fec 24h alarm category": 3,
+      "stat line 1 laser 15m alarm category": 7,
+      "stat line 1 laser 24h alarm category": 7,
+      "stat line 1 odu2 near 15m alarm category": 4,
+      "stat line 1 odu2 near 24h alarm category": 4,
+      "stat line 1 optic 15m alarm category": 7,
+      "stat line 1 optic 24h alarm category": 7,
+      "stat line 1 otu near 15m alarm category": 4,
+      "stat line 1 otu near 24h alarm category": 4,
+      "stat trib 1 odu0 1 near 15m alarm category": 4,
+      "stat trib 1 odu0 1 near 24h alarm category": 4,
+      "stat trib 1 odu1 1 near 15m alarm category": 4,
+      "stat trib 1 odu1 1 near 24h alarm category": 4,
+      "trib 1 odu0 1 alarm category": 8,
+      "trib 1 odu1 1 alarm category": 8,
+      "trib 1 opu0 1 alarm category": 2,
+      "trib 1 opu1 1 alarm category": 3
+    },
+    "MKv1": {
+      "mk lan1 alarm category": 1,
+      "mk lan3 sfp alarm category": 4,
+      "mk power alarm category": 6,
+      "mk pwunit 1 alarm category": 6,
+      "mk therm 1 alarm category": 2
+    },
+    "DWDM40v1": {
+      "dwdm power alarm category": 6,
+      "dwdm pwunit 1 alarm category": 6,
+      "dwdm therm 1 alarm category": 2,
+      "dwdm40 channel tx 1 alarm category": 2,
+      "dwdm40 channel rx 1 alarm category": 2,
+      "dwdm40 stat optic 1 15m alarm category": 7,
+      "dwdm40 stat optic 1 24h alarm category": 7
+    },
+    "DWDM401v1": {
+      "dwdm power alarm category": 6,
+      "dwdm pwunit 1 alarm category": 6,
+      "dwdm therm 1 alarm category": 2,
+      "dwdm40_1 channel tx even 1 alarm category": 2,
+      "dwdm40_1 channel rx even 1 alarm category": 2,
+      "dwdm40_1 stat optic even 1 15m alarm category": 7,
+      "dwdm40_1 stat optic even 1 24h alarm category": 7
+    },
+    "OUv1": {
+      "boost 1 alarm category": 7,
+      "boost 1 hard-alarm category": 4,
+      "osc line 1 alarm category": 4,
+      "ou power alarm category": 6,
+      "ou pwunit 1 alarm category": 6,
+      "ou therm 1 alarm category": 2,
+      "stat line laser 1 15m alarm category": 7,
+      "stat line laser 1 24h alarm category": 7,
+      "stat line optic 1 15m alarm category": 7,
+      "stat line optic 1 24h alarm category": 7,
+      "stat osc eth 1 15m alarm category": 13,
+      "stat osc eth 1 24h alarm category": 13,
+      "stat osc laser 1 15m alarm category": 7,
+      "stat osc laser 1 24h alarm category": 7,
+      "stat osc optic 1 15m alarm category": 7,
+      "stat osc optic 1 24h alarm category": 7
+    },
+    "MV2Mv1": {
+      "fan-6 power alarm category": 6,
+      "fan-6 rpm alarm category": 6,
+      "mv2m hot-swap switch state alarm category": 1,
+      "mv2m life-state alarm category": 2,
+      "mv2m power alarm category": 3,
+      "mv2m pwunit 1 alarm category": 6,
+      "mv2m therm 1 alarm category": 2
+    },
+    "MVPv1": {
+      "pem alarm category": 12,
+      "pem therm 1 alarm category": 2
+    },
+    "MASv1": {
+      "mas sensor 1 alarm category": 1
+    },
+    "TP510Gv1": {},
+    "ROADMv1": {
+      "channel 1 gport rx alarm category": 2,
+      "channel 1 gport tx alarm category": 2,
+      "roadm power alarm category": 6,
+      "roadm pwunit 1 alarm category": 6,
+      "roadm therm 1 alarm category": 2,
+      "roadm therm wss alarm category": 2
+    }
+  },
+  "Loopback": {
+    "MX210Gv1": {
+      "stOppMX210Gv1CompPortLoop": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.2.1.2.1.9.",
+        2
+      ],
+      "stOppMX210Gv1GroupOTULoop": [
+        ".1.3.6.1.4.1.5756.9.1.2.10.1.4.2.2.1.12.",
+        2
+      ]
+    }
+  }
+}

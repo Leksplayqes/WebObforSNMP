@@ -1,0 +1,335 @@
+2026-01-27T11:48:48.019666+00 syslogd started: BusyBox v1.27.2
+2026-01-27T11:48:50.287153+00 smd su[881]: Successful su for postgres by root
+2026-01-27T11:48:50.287379+00 smd su[881]: + ??? root:postgres
+2026-01-27T11:48:50.312868+00 smd su[881]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:48:50.329405+00 smd su[881]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:48:50.473320+00 smd rsyslogd:  [origin software="rsyslogd" swVersion="8.29.0" x-pid="856" x-info="http://www.rsyslog.com"] start
+2026-01-27T11:48:53.414191+00 smd su[911]: Successful su for postgres by root
+2026-01-27T11:48:53.414685+00 smd su[911]: + /dev/console root:postgres
+2026-01-27T11:48:53.416009+00 smd su[911]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:48:53.943183+00 smd su[911]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:48:53.958153+00 smd su[917]: Successful su for postgres by root
+2026-01-27T11:48:53.958684+00 smd su[917]: + /dev/console root:postgres
+2026-01-27T11:48:53.960018+00 smd su[917]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:48:54.156365+00 smd su[917]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:48:54.191593+00 smd su[924]: Successful su for postgres by root
+2026-01-27T11:48:54.192113+00 smd su[924]: + /dev/console root:postgres
+2026-01-27T11:48:54.193368+00 smd su[924]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:48:54.263939+00 smd su[924]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:48:54.278900+00 smd su[929]: Successful su for postgres by root
+2026-01-27T11:48:54.279412+00 smd su[929]: + /dev/console root:postgres
+2026-01-27T11:48:54.280669+00 smd su[929]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:48:54.333854+00 smd su[929]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:48:54.348365+00 smd su[935]: Successful su for postgres by root
+2026-01-27T11:48:54.348878+00 smd su[935]: + ??? root:postgres
+2026-01-27T11:48:54.350172+00 smd su[935]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:48:54.412528+00 smd su[935]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:48:54.425043+00 smd su[941]: Successful su for postgres by root
+2026-01-27T11:48:54.425565+00 smd su[941]: + /dev/console root:postgres
+2026-01-27T11:48:54.426888+00 smd su[941]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:48:54.478954+00 smd su[941]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:48:54.493281+00 smd su[947]: Successful su for postgres by root
+2026-01-27T11:48:54.493794+00 smd su[947]: + /dev/console root:postgres
+2026-01-27T11:48:54.495195+00 smd su[947]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:48:54.549514+00 smd su[947]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:48:54.594763+00 smd su[954]: Successful su for postgres by root
+2026-01-27T11:48:54.595296+00 smd su[954]: + ??? root:postgres
+2026-01-27T11:48:54.596555+00 smd su[954]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:48:54.664501+00 smd su[954]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:48:54.679186+00 smd su[961]: Successful su for postgres by root
+2026-01-27T11:48:54.679698+00 smd su[961]: + ??? root:postgres
+2026-01-27T11:48:54.680965+00 smd su[961]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:48:54.756307+00 smd su[961]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:48:54.791067+00 smd runit: start
+2026-01-27T11:48:54.866305+00 smd ri_snmplog: start
+2026-01-27T11:48:54.950042+00 smd ri_cliserv: start
+2026-01-27T11:48:55.303140+00 smd pwroffd[991]: Daemon started in foreground mode...
+2026-01-27T11:48:55.304089+00 smd pwroffd[991]: inversion: off
+2026-01-27T11:48:55.304226+00 smd timed[975]: Daemon started in foreground mode...
+2026-01-27T11:48:55.309854+00 smd timed[975]: ntp engine ready
+2026-01-27T11:48:55.330977+00 smd ospfctld[994]: Daemon started in foreground mode...
+2026-01-27T11:48:55.334092+00 smd snmpctld[986]: Daemon started in foreground mode...
+2026-01-27T11:48:55.347043+00 smd inetd[1009]: Daemon started in foreground mode...
+2026-01-27T11:48:55.348059+00 smd snmploggerd[979]: Started
+2026-01-27T11:48:55.406347+00 smd snmpd[983]: Turning on AgentX master support.
+2026-01-27T11:48:55.410880+00 smd snmpd[983]: NET-SNMP version 5.7.3
+2026-01-27T11:48:55.425938+00 smd snmpctld[986]: snmp_users_init end
+2026-01-27T11:48:55.800476+00 smd sysd[978]: Daemon started in foreground mode...
+2026-01-27T11:48:55.815474+00 smd sysd[978]: Interface 'dcc1' link down
+2026-01-27T11:48:55.816052+00 smd sysd[978]: Interface 'dcc10' link down
+2026-01-27T11:48:55.816530+00 smd sysd[978]: Interface 'dcc2' link down
+2026-01-27T11:48:55.816981+00 smd sysd[978]: Interface 'dcc3' link down
+2026-01-27T11:48:55.817420+00 smd sysd[978]: Interface 'dcc4' link down
+2026-01-27T11:48:55.817881+00 smd sysd[978]: Interface 'dcc5' link down
+2026-01-27T11:48:55.818365+00 smd sysd[978]: Interface 'dcc6' link down
+2026-01-27T11:48:55.818942+00 smd sysd[978]: Interface 'dcc7' link down
+2026-01-27T11:48:55.819410+00 smd sysd[978]: Interface 'dcc8' link down
+2026-01-27T11:48:55.819862+00 smd sysd[978]: Interface 'dcc9' link down
+2026-01-27T11:48:55.820328+00 smd sysd[978]: Interface 'eth0' link up
+2026-01-27T11:48:55.820941+00 smd sysd[978]: Set interface 'eth0' for management
+2026-01-27T11:48:55.822050+00 smd sysd[978]: boot: /dev/mtd0 0X100000 0x1000
+2026-01-27T11:48:55.822487+00 smd sysd[978]: env: /dev/mtd1 0X20000 0x1000
+2026-01-27T11:48:55.822954+00 smd sysd[978]: fpga: /dev/mtd2 0X4E0000 0x1000
+2026-01-27T11:48:55.823357+00 smd sysd[978]: image1: /dev/mtd3 0X5000000 0x1000
+2026-01-27T11:48:55.823729+00 smd sysd[978]: image2: /dev/mtd4 0X5000000 0x1000
+2026-01-27T11:48:55.824092+00 smd sysd[978]: spi0.1: /dev/mtd5 0X4000000 0x1000
+2026-01-27T11:48:55.824461+00 smd sysd[978]: mtd_parse: COMPLETED
+2026-01-27T11:48:55.830349+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=0:0.
+2026-01-27T11:48:55.833944+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=1:0.
+2026-01-27T11:48:55.837163+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=2:0.
+2026-01-27T11:48:55.842060+00 smd sysd[978]: System booted from main system image # 1
+2026-01-27T11:48:55.952235+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=3:0.
+2026-01-27T11:48:55.952404+00 smd logbackupd[998]: Started
+2026-01-27T11:48:55.952503+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=4:0.
+2026-01-27T11:48:55.952596+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=5:0.
+2026-01-27T11:48:55.952686+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=6:0.
+2026-01-27T11:48:55.952775+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=7:0.
+2026-01-27T11:48:55.952863+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=8:0.
+2026-01-27T11:48:55.952971+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=9:0.
+2026-01-27T11:48:55.953064+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=10:0.
+2026-01-27T11:48:55.953836+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=11:0.
+2026-01-27T11:48:55.953942+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=12:0.
+2026-01-27T11:48:55.988056+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=13:0.
+2026-01-27T11:48:56.020553+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=14:1.
+2026-01-27T11:48:56.056204+00 smd osmk-wrapper[995]: osmk_eeprom_init (inventory start read) for slot=15:1.
+2026-01-27T11:48:56.056438+00 smd osmk-wrapper[995]: crc control enabled: 0c00
+2026-01-27T11:48:56.056541+00 smd osmk-wrapper[995]: main():1355 - DO START SMD
+2026-01-27T11:48:56.159970+00 smd bird: Started
+2026-01-27T11:48:56.606530+00 smd sysd[978]: changed password for user 'sadmin'
+2026-01-27T11:48:56.606765+00 smd sysd[978]: changed level to 32 for user 'sadmin'
+2026-01-27T11:48:56.609265+00 smd sysd[978]: changed password for user 'admin'
+2026-01-27T11:48:56.610485+00 smd sysd[978]: changed level to 15 for user 'admin'
+2026-01-27T11:48:56.676943+00 smd snmpctld[986]: ipaddr_mon: RTM_DELADDR
+2026-01-27T11:48:56.677468+00 smd snmpctld[986]: ipaddr_mon:RTM_NEWADDR
+2026-01-27T11:48:56.681722+00 smd sysd[978]: set ip:192.168.72.211/24 gw:0.0.0.0 'eth0'
+2026-01-27T11:48:56.687457+00 smd sysd[978]: set ip:192.168.72.211/24 gw:192.168.72.1 'eth0'
+2026-01-27T11:48:56.694232+00 smd osmk-wrapper[995]: Идёт подготовка конфигурационных файлов (4628)
+2026-01-27T11:48:56.694385+00 smd osmk-wrapper[995]: du->curlen = 0, du->maxlen =4628 
+2026-01-27T11:48:56.695020+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.695144+00 smd osmk-wrapper[995]: du->curlen = 80, du->maxlen =4628 
+2026-01-27T11:48:56.695779+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.695903+00 smd osmk-wrapper[995]: du->curlen = 160, du->maxlen =4628 
+2026-01-27T11:48:56.696498+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.696615+00 smd osmk-wrapper[995]: du->curlen = 240, du->maxlen =4628 
+2026-01-27T11:48:56.697165+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.697273+00 smd osmk-wrapper[995]: du->curlen = 320, du->maxlen =4628 
+2026-01-27T11:48:56.697812+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.697919+00 smd osmk-wrapper[995]: du->curlen = 400, du->maxlen =4628 
+2026-01-27T11:48:56.698450+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.698560+00 smd osmk-wrapper[995]: du->curlen = 480, du->maxlen =4628 
+2026-01-27T11:48:56.699293+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.699421+00 smd osmk-wrapper[995]: du->curlen = 560, du->maxlen =4628 
+2026-01-27T11:48:56.699988+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.700100+00 smd osmk-wrapper[995]: du->curlen = 640, du->maxlen =4628 
+2026-01-27T11:48:56.700636+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.700765+00 smd osmk-wrapper[995]: du->curlen = 720, du->maxlen =4628 
+2026-01-27T11:48:56.701309+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.701417+00 smd osmk-wrapper[995]: du->curlen = 800, du->maxlen =4628 
+2026-01-27T11:48:56.702031+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.702156+00 smd osmk-wrapper[995]: du->curlen = 880, du->maxlen =4628 
+2026-01-27T11:48:56.702937+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.703094+00 smd osmk-wrapper[995]: du->curlen = 960, du->maxlen =4628 
+2026-01-27T11:48:56.704284+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.704426+00 smd osmk-wrapper[995]: du->curlen = 1040, du->maxlen =4628 
+2026-01-27T11:48:56.704527+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.704667+00 smd osmk-wrapper[995]: du->curlen = 1120, du->maxlen =4628 
+2026-01-27T11:48:56.708110+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.708290+00 smd osmk-wrapper[995]: du->curlen = 1200, du->maxlen =4628 
+2026-01-27T11:48:56.708393+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.708497+00 smd osmk-wrapper[995]: du->curlen = 1280, du->maxlen =4628 
+2026-01-27T11:48:56.708589+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.708675+00 smd osmk-wrapper[995]: du->curlen = 1360, du->maxlen =4628 
+2026-01-27T11:48:56.712477+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.712631+00 smd osmk-wrapper[995]: du->curlen = 1440, du->maxlen =4628 
+2026-01-27T11:48:56.712728+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.712818+00 smd osmk-wrapper[995]: du->curlen = 1520, du->maxlen =4628 
+2026-01-27T11:48:56.712908+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.712998+00 smd osmk-wrapper[995]: du->curlen = 1600, du->maxlen =4628 
+2026-01-27T11:48:56.713087+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.713177+00 smd osmk-wrapper[995]: du->curlen = 1680, du->maxlen =4628 
+2026-01-27T11:48:56.713269+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.713366+00 smd osmk-wrapper[995]: du->curlen = 1760, du->maxlen =4628 
+2026-01-27T11:48:56.713459+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.717052+00 smd osmk-wrapper[995]: du->curlen = 1840, du->maxlen =4628 
+2026-01-27T11:48:56.717199+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.717296+00 smd osmk-wrapper[995]: du->curlen = 1920, du->maxlen =4628 
+2026-01-27T11:48:56.717389+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.717518+00 smd osmk-wrapper[995]: du->curlen = 2000, du->maxlen =4628 
+2026-01-27T11:48:56.717644+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.717762+00 smd osmk-wrapper[995]: du->curlen = 2080, du->maxlen =4628 
+2026-01-27T11:48:56.717868+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.717976+00 smd osmk-wrapper[995]: du->curlen = 2160, du->maxlen =4628 
+2026-01-27T11:48:56.718100+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.718207+00 smd osmk-wrapper[995]: du->curlen = 2240, du->maxlen =4628 
+2026-01-27T11:48:56.723852+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.728558+00 smd osmk-wrapper[995]: du->curlen = 2320, du->maxlen =4628 
+2026-01-27T11:48:56.728699+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.728794+00 smd osmk-wrapper[995]: du->curlen = 2400, du->maxlen =4628 
+2026-01-27T11:48:56.728887+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.728977+00 smd osmk-wrapper[995]: du->curlen = 2480, du->maxlen =4628 
+2026-01-27T11:48:56.729067+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.729158+00 smd osmk-wrapper[995]: du->curlen = 2560, du->maxlen =4628 
+2026-01-27T11:48:56.729248+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.729339+00 smd osmk-wrapper[995]: du->curlen = 2640, du->maxlen =4628 
+2026-01-27T11:48:56.729445+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.729538+00 smd osmk-wrapper[995]: du->curlen = 2720, du->maxlen =4628 
+2026-01-27T11:48:56.740883+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.741158+00 smd osmk-wrapper[995]: du->curlen = 2800, du->maxlen =4628 
+2026-01-27T11:48:56.741296+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.741395+00 smd osmk-wrapper[995]: du->curlen = 2880, du->maxlen =4628 
+2026-01-27T11:48:56.741519+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.741643+00 smd osmk-wrapper[995]: du->curlen = 2960, du->maxlen =4628 
+2026-01-27T11:48:56.741770+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.741870+00 smd osmk-wrapper[995]: du->curlen = 3040, du->maxlen =4628 
+2026-01-27T11:48:56.741962+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.742053+00 smd osmk-wrapper[995]: du->curlen = 3120, du->maxlen =4628 
+2026-01-27T11:48:56.742143+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.746961+00 smd osmk-wrapper[995]: du->curlen = 3200, du->maxlen =4628 
+2026-01-27T11:48:56.749082+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.749224+00 smd osmk-wrapper[995]: du->curlen = 3280, du->maxlen =4628 
+2026-01-27T11:48:56.749319+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.749411+00 smd osmk-wrapper[995]: du->curlen = 3360, du->maxlen =4628 
+2026-01-27T11:48:56.749501+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.749590+00 smd osmk-wrapper[995]: du->curlen = 3440, du->maxlen =4628 
+2026-01-27T11:48:56.750601+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.754206+00 smd osmk-wrapper[995]: du->curlen = 3520, du->maxlen =4628 
+2026-01-27T11:48:56.754382+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.756703+00 smd osmk-wrapper[995]: du->curlen = 3600, du->maxlen =4628 
+2026-01-27T11:48:56.756869+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.757045+00 smd osmk-wrapper[995]: du->curlen = 3680, du->maxlen =4628 
+2026-01-27T11:48:56.757182+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.757297+00 smd osmk-wrapper[995]: du->curlen = 3760, du->maxlen =4628 
+2026-01-27T11:48:56.757403+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.757502+00 smd osmk-wrapper[995]: du->curlen = 3840, du->maxlen =4628 
+2026-01-27T11:48:56.757599+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.757706+00 smd osmk-wrapper[995]: du->curlen = 3920, du->maxlen =4628 
+2026-01-27T11:48:56.757830+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.757965+00 smd osmk-wrapper[995]: du->curlen = 4000, du->maxlen =4628 
+2026-01-27T11:48:56.763371+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.763692+00 smd osmk-wrapper[995]: du->curlen = 4080, du->maxlen =4628 
+2026-01-27T11:48:56.764244+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.764517+00 smd osmk-wrapper[995]: du->curlen = 4160, du->maxlen =4628 
+2026-01-27T11:48:56.764740+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.764869+00 smd osmk-wrapper[995]: du->curlen = 4240, du->maxlen =4628 
+2026-01-27T11:48:56.764967+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.765059+00 smd osmk-wrapper[995]: du->curlen = 4320, du->maxlen =4628 
+2026-01-27T11:48:56.765152+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.765242+00 smd osmk-wrapper[995]: du->curlen = 4400, du->maxlen =4628 
+2026-01-27T11:48:56.765332+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.765422+00 smd osmk-wrapper[995]: du->curlen = 4480, du->maxlen =4628 
+2026-01-27T11:48:56.765513+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.765602+00 smd osmk-wrapper[995]: du->curlen = 4560, du->maxlen =4628 
+2026-01-27T11:48:56.765691+00 smd osmk-wrapper[995]: продолжаем попытку зачитать конфигурацию
+2026-01-27T11:48:56.765778+00 smd osmk-wrapper[995]: du->curlen = 4628, du->maxlen =4628 
+2026-01-27T11:48:56.824643+00 smd osmk-wrapper[995]: upload_config():349 - executing: rm -fr /tmp/smd/config_old
+2026-01-27T11:48:56.843524+00 smd osmk-wrapper[995]: osmk_cfg_load():583 - upload_config (4628 bytes): success
+2026-01-27T11:48:56.843732+00 smd osmk-wrapper[995]: Подготовка конфигурационных файлов (4628 байт) завершена успешно.
+2026-01-27T11:48:56.876252+00 smd cli-serv[1012]: started
+2026-01-27T11:48:57.316870+00 smd smdd[1124]: Daemon started in foreground mode
+2026-01-27T11:48:57.369199+00 smd sshd[1151]: Server listening on 0.0.0.0 port 2222.
+2026-01-27T11:48:57.575146+00 smd smdd[1124]: Entering main loop
+2026-01-27T11:48:58.886176+00 smd sshd[1184]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('admin' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:48:58.893606+00 smd sshd[1174]: Accepted keyboard-interactive/pam for admin from 192.168.72.55 port 55563 ssh2
+2026-01-27T11:48:58.976503+00 smd sshd[1174]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+2026-01-27T11:48:58.976656+00 smd sshd[1214]: Registered signal handlers for user admin 192.168.72.55 port 55563
+2026-01-27T11:48:59.046803+00 smd sshd[1214]: Transferred with user admin 192.168.72.55 port 55563: sent 3000, received 1608 bytes
+2026-01-27T11:48:59.187263+00 smd sshd[1174]: pam_unix(sshd:session): session closed for user admin
+2026-01-27T11:48:59.356169+00 smd sshd[1224]: pam_unix(sshd:auth): user 'root' has blank passwd
+2026-01-27T11:48:59.357195+00 smd sshd[1224]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('root' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:48:59.369766+00 smd sshd[1219]: Accepted keyboard-interactive/pam for root from 192.168.72.55 port 55564 ssh2
+2026-01-27T11:48:59.374216+00 smd sshd[1219]: pam_unix(sshd:session): session opened for user root by (uid=0)
+2026-01-27T11:48:59.504534+00 smd snmpd[1229]: Turning on AgentX master support.
+2026-01-27T11:48:59.511506+00 smd snmpd[1229]: NET-SNMP version 5.7.3
+2026-01-27T11:48:59.582499+00 smd sshd[1219]: syslogin_perform_logout: logout() returned an error
+2026-01-27T11:48:59.586920+00 smd sshd[1219]: pam_unix(sshd:session): session closed for user root
+2026-01-27T11:48:59.592549+00 smd sshd[1219]: Transferred with user root 192.168.72.55 port 55564: sent 8904, received 3816 bytes
+2026-01-27T11:48:59.846771+00 smd sshd[1251]: pam_unix(sshd:auth): user 'root' has blank passwd
+2026-01-27T11:48:59.847578+00 smd sshd[1251]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('root' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:48:59.851578+00 smd sshd[1239]: Accepted keyboard-interactive/pam for root from 192.168.72.55 port 55565 ssh2
+2026-01-27T11:48:59.858113+00 smd sshd[1239]: pam_unix(sshd:session): session opened for user root by (uid=0)
+2026-01-27T11:49:00.021631+00 smd sshd[1239]: syslogin_perform_logout: logout() returned an error
+2026-01-27T11:49:00.024784+00 smd sshd[1239]: pam_unix(sshd:session): session closed for user root
+2026-01-27T11:49:00.035330+00 smd sshd[1239]: Transferred with user root 192.168.72.55 port 55565: sent 149016, received 3192 bytes
+2026-01-27T11:49:00.577114+00 smd smdd[1124]: SMD2 Daemon started
+2026-01-27T11:49:00.577699+00 smd smdd[1124]: ConfigDir. Watching:: /tmp/smd/config/
+2026-01-27T11:49:00.579142+00 smd smdd[1124]: OSMK CreateConfig thread started
+2026-01-27T11:49:00.687662+00 smd smdd[1124]: SMD2 SNMP Daemon started
+2026-01-27T11:49:00.727734+00 smd smdd[1124]: Statistic is restored from flash to ram
+2026-01-27T11:49:00.729109+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/subnetwork.cfg.gz
+2026-01-27T11:49:00.729788+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/blklock.cfg.gz
+2026-01-27T11:49:00.730691+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM01.INI.cfg.gz
+2026-01-27T11:49:00.731184+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM01.INI.cfg.gz
+2026-01-27T11:49:00.731623+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM01.INI.cfg.gz
+2026-01-27T11:49:00.732031+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM01.INI.cfg.gz
+2026-01-27T11:49:00.732483+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM02.INI.cfg.gz
+2026-01-27T11:49:00.732889+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM02.INI.cfg.gz
+2026-01-27T11:49:00.733313+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM02.INI.cfg.gz
+2026-01-27T11:49:00.733716+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM02.INI.cfg.gz
+2026-01-27T11:49:00.736941+00 smd smdd[1124]: OSM-K(M) Warm Start
+2026-01-27T11:49:00.758436+00 smd snmploggerd[979]: Connected to database
+2026-01-27T11:49:00.773779+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM04.INI.cfg.gz
+2026-01-27T11:49:00.774965+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM04.INI.cfg.gz
+2026-01-27T11:49:00.783029+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM05.INI.cfg.gz
+2026-01-27T11:49:00.784113+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM05.INI.cfg.gz
+2026-01-27T11:49:00.785133+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM06.INI.cfg.gz
+2026-01-27T11:49:00.786105+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM06.INI.cfg.gz
+2026-01-27T11:49:00.787381+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM07.INI.cfg.gz
+2026-01-27T11:49:00.791886+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM07.INI.cfg.gz
+2026-01-27T11:49:00.793038+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM09.INI.cfg.gz
+2026-01-27T11:49:00.793890+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM09.INI.cfg.gz
+2026-01-27T11:49:00.795618+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM10.INI.cfg.gz
+2026-01-27T11:49:00.807289+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM10.INI.cfg.gz
+2026-01-27T11:49:00.831154+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM13.INI.cfg.gz
+2026-01-27T11:49:00.837824+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM13.INI.cfg.gz
+2026-01-27T11:49:00.854024+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM14.INI.cfg.gz
+2026-01-27T11:49:00.859820+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM14.INI.cfg.gz
+2026-01-27T11:49:00.865574+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM15.INI.cfg.gz
+2026-01-27T11:49:00.866522+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM15.INI.cfg.gz
+2026-01-27T11:49:00.867561+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM16.INI.cfg.gz
+2026-01-27T11:49:00.870454+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM16.INI.cfg.gz
+2026-01-27T11:49:00.877119+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM17.INI.cfg.gz
+2026-01-27T11:49:00.899933+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM17.INI.cfg.gz
+2026-01-27T11:49:00.942583+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM18.INI.cfg.gz
+2026-01-27T11:49:00.966940+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM18.INI.cfg.gz
+2026-01-27T11:49:00.993579+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM19.INI.cfg.gz
+2026-01-27T11:49:00.994231+00 smd smdd[1124]: Загружаем конфигурационный файл:/tmp/smd/config/PM19.INI.cfg.gz
+2026-01-27T11:49:01.210682+00 smd smdd[1124]: OSMK End Load commute
+2026-01-27T11:49:01.603834+00 smd snmploggerd[979]: Can not recognize notifier with OID "1.3.6.1.4.1.5756.3.11.1.1.3.11".
+2026-01-27T11:49:01.648737+00 smd snmploggerd[979]: Invalid trap message from PIPE/socket: "1.3.6.1.4.1.5756.3.11.1.1.3.11, 1.3.6.1.4.1.5756.3.11.1.1.3.1.1.3.2, 1, 1.3.6.1.4.1.5756.3.11.1.1.3.1.1.7.2, 02"
+2026-01-27T11:49:01.654454+00 smd smdd[1124]: OSMK EndInitIRQ
+2026-01-27T11:49:01.654635+00 smd smdd[1124]: SaveBlkLock
+2026-01-27T11:49:01.654783+00 smd smdd[1124]: info: config has change. Wait 5 second before write on the DISK.
+2026-01-27T11:49:02.579928+00 smd snmploggerd[979]: Invalid category value 187
+2026-01-27T11:49:02.580180+00 smd snmploggerd[979]: Invalid trap message from PIPE/socket: "1.3.6.1.4.1.5756.3.11.2.7.1.1.2, 1.3.6.1.4.1.5756.3.11.2.7.1.2.1.3,2"
+2026-01-27T11:49:06.587605+00 smd smdd[1124]: info: Send config write on DISK
+2026-01-27T11:49:06.620576+00 smd osmk-wrapper[995]: pipe_read():1191 - read 3480 bytes
+2026-01-27T11:49:06.620830+00 smd osmk-wrapper[995]: config 4640: H4sIAAAAAAACA+2ceTiUax/Hx26QRsRQiSLLoNkHU7YQhZBlLMcy1kHG7liyjJAsR2UiW3ZZpkU5SIWo
+2026-01-27T11:49:07.585171+00 smd smdd[1124]: The file config was change with WD 1
+2026-01-27T11:49:17.749683+00 smd timed[975]: peer 192.168.120.1 now valid
+2026-01-27T11:49:33.837145+00 smd check_sw[1313]: 55 process(es) was verified. No errors.
+2026-01-27T11:51:01.600049+00 smd snmploggerd[1031]: Connected to database
+2026-01-27T11:52:17.818818+00 smd timed[975]: change date and/or time from '2026-01-27 11:52:17.816256' to '2026-01-27 11:52:17.816264' by system (offset 0.000023s)
+2026-01-27T11:52:37.073311+00 smd sshd[1330]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('admin' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:52:37.077028+00 smd sshd[1327]: Accepted keyboard-interactive/pam for admin from 192.168.72.55 port 55590 ssh2
+2026-01-27T11:52:37.087313+00 smd sshd[1327]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+2026-01-27T11:52:37.092198+00 smd sshd[1331]: Registered signal handlers for user admin 192.168.72.55 port 55590
+2026-01-27T11:52:37.206840+00 smd sshd[1331]: Transferred with user admin 192.168.72.55 port 55590: sent 2904, received 1608 bytes
+2026-01-27T11:52:37.213959+00 smd sshd[1327]: pam_unix(sshd:session): session closed for user admin
+2026-01-27T11:52:37.906914+00 smd sshd[1336]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('admin' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:52:37.910902+00 smd sshd[1333]: Accepted keyboard-interactive/pam for admin from 192.168.72.55 port 55592 ssh2
+2026-01-27T11:52:37.919138+00 smd sshd[1333]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+2026-01-27T11:52:37.925277+00 smd sshd[1337]: Registered signal handlers for user admin 192.168.72.55 port 55592
+2026-01-27T11:52:38.030352+00 smd sshd[1337]: Transferred with user admin 192.168.72.55 port 55592: sent 3064, received 1576 bytes
+2026-01-27T11:52:38.037599+00 smd sshd[1337]: packet_write_poll: Connection from user admin 192.168.72.55 port 55592: Broken pipe
+2026-01-27T11:52:38.037785+00 smd sshd[1333]: pam_unix(sshd:session): session closed for user admin
+2026-01-27T11:52:38.260100+00 smd sshd[1342]: pam_unix(sshd:auth): user 'root' has blank passwd
+2026-01-27T11:52:38.261076+00 smd sshd[1342]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('root' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:52:38.264951+00 smd sshd[1339]: Accepted keyboard-interactive/pam for root from 192.168.72.55 port 55595 ssh2
+2026-01-27T11:52:38.272754+00 smd sshd[1339]: pam_unix(sshd:session): session opened for user root by (uid=0)
+2026-01-27T11:52:38.365464+00 smd sshd[1339]: syslogin_perform_logout: logout() returned an error
+2026-01-27T11:52:38.368482+00 smd sshd[1339]: pam_unix(sshd:session): session closed for user root
+2026-01-27T11:52:38.375515+00 smd sshd[1339]: Transferred with user root 192.168.72.55 port 55595: sent 9096, received 3800 bytes
+2026-01-27T11:52:38.608737+00 smd sshd[1348]: pam_unix(sshd:auth): user 'root' has blank passwd
+2026-01-27T11:52:38.609592+00 smd sshd[1348]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('root' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:52:38.613417+00 smd sshd[1345]: Accepted keyboard-interactive/pam for root from 192.168.72.55 port 55596 ssh2
+2026-01-27T11:52:38.621089+00 smd sshd[1345]: pam_unix(sshd:session): session opened for user root by (uid=0)

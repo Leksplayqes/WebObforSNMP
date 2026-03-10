@@ -1,0 +1,86 @@
+{
+  "id": "4cb78fc4f56c",
+  "type": "check_conf",
+  "status": "completed",
+  "created_at": 1769514462.3089914,
+  "updated_at": 1769514539.9903798,
+  "started_at": 1769514462.3089914,
+  "finished_at": 1769514539.9903798,
+  "payload": {
+    "id": "4cb78fc4f56c",
+    "type": "check_conf",
+    "params": {
+      "ip": "192.168.72.211",
+      "password": "",
+      "delay": 70,
+      "iterations": 3
+    },
+    "result": {
+      "result": {
+        "ip": "192.168.72.211",
+        "iterations": 3,
+        "started": "2026-01-27T14:47:42",
+        "results": [
+          {
+            "iteration": 1,
+            "start_time": "2026-01-27T14:47:43",
+            "steps": [
+              {
+                "get_config": "!#343158340b53728a671bce8acd87a406\n"
+              },
+              {
+                "copy": {
+                  "config": "checkFunctions/LogConf\\config_20260127_144744",
+                  "log": "checkFunctions/LogConf\\log_20260127_144744"
+                }
+              },
+              {
+                "reload": "sent"
+              }
+            ],
+            "status": "ok",
+            "end_time": "2026-01-27T14:48:56"
+          },
+          {
+            "iteration": 2,
+            "start_time": "2026-01-27T14:48:56",
+            "steps": [
+              {
+                "get_config": "username sadmin password $gost12256hash$kYBVjggH$l7P2lljZSAzpDzVDAfHzBKDT3OeO1QKwn5bZL7D5PS0 encrypted level 32\n"
+              },
+              {
+                "copy": {
+                  "config": "checkFunctions/LogConf\\config_20260127_144859",
+                  "log": "checkFunctions/LogConf\\log_20260127_144859"
+                }
+              },
+              {
+                "reload": "skipped - config changed"
+              }
+            ],
+            "status": "config_changed"
+          }
+        ],
+        "finished": "2026-01-27T14:48:59",
+        "status": "OK 1/3"
+      }
+    },
+    "error": null,
+    "error_obj": null,
+    "started": 1769514462.3089914,
+    "finished": 1769514539.9903798,
+    "summary": {
+      "status": "completed",
+      "total": 3,
+      "message": "Итерация 2/3: config_changed",
+      "duration": 77.68138837814331
+    },
+    "duration": 77.68138837814331
+  },
+  "summary": {
+    "status": "completed",
+    "total": 3,
+    "message": "Итерация 2/3: config_changed",
+    "duration": 77.68138837814331
+  }
+}

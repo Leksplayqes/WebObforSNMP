@@ -1,0 +1,118 @@
+2026-01-27T11:42:34.276898+00 smd su[881]: Successful su for postgres by root
+2026-01-27T11:42:34.277298+00 smd su[881]: + ??? root:postgres
+2026-01-27T11:42:34.302716+00 smd su[881]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:42:34.318922+00 smd su[881]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:42:37.402056+00 smd su[911]: Successful su for postgres by root
+2026-01-27T11:42:37.402587+00 smd su[911]: + /dev/console root:postgres
+2026-01-27T11:42:37.403862+00 smd su[911]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:42:37.927994+00 smd su[911]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:42:37.943776+00 smd su[917]: Successful su for postgres by root
+2026-01-27T11:42:37.944285+00 smd su[917]: + /dev/console root:postgres
+2026-01-27T11:42:37.945619+00 smd su[917]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:42:38.141243+00 smd su[917]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:42:38.177778+00 smd su[924]: Successful su for postgres by root
+2026-01-27T11:42:38.178287+00 smd su[924]: + /dev/console root:postgres
+2026-01-27T11:42:38.179499+00 smd su[924]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:42:38.245677+00 smd su[924]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:42:38.258853+00 smd su[929]: Successful su for postgres by root
+2026-01-27T11:42:38.259374+00 smd su[929]: + /dev/console root:postgres
+2026-01-27T11:42:38.260622+00 smd su[929]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:42:38.312981+00 smd su[929]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:42:38.328260+00 smd su[935]: Successful su for postgres by root
+2026-01-27T11:42:38.328836+00 smd su[935]: + ??? root:postgres
+2026-01-27T11:42:38.330084+00 smd su[935]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:42:38.391255+00 smd su[935]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:42:38.404288+00 smd su[941]: Successful su for postgres by root
+2026-01-27T11:42:38.404865+00 smd su[941]: + /dev/console root:postgres
+2026-01-27T11:42:38.406072+00 smd su[941]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:42:38.456507+00 smd su[941]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:42:38.471848+00 smd su[947]: Successful su for postgres by root
+2026-01-27T11:42:38.472362+00 smd su[947]: + /dev/console root:postgres
+2026-01-27T11:42:38.473663+00 smd su[947]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:42:38.528361+00 smd su[947]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:42:38.573034+00 smd su[954]: Successful su for postgres by root
+2026-01-27T11:42:38.573694+00 smd su[954]: + ??? root:postgres
+2026-01-27T11:42:38.574954+00 smd su[954]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:42:38.641473+00 smd su[954]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:42:38.655409+00 smd su[961]: Successful su for postgres by root
+2026-01-27T11:42:38.655923+00 smd su[961]: + ??? root:postgres
+2026-01-27T11:42:38.657235+00 smd su[961]: pam_unix(su:session): session opened for user postgres by (uid=0)
+2026-01-27T11:42:38.733051+00 smd su[961]: pam_unix(su:session): session closed for user postgres
+2026-01-27T11:42:41.234442+00 smd sshd[1140]: Server listening on 0.0.0.0 port 2222.
+2026-01-27T11:42:51.090094+00 smd sshd[1309]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('admin' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:42:51.095802+00 smd sshd[1305]: Accepted keyboard-interactive/pam for admin from 192.168.72.55 port 55493 ssh2
+2026-01-27T11:42:52.141998+00 smd sshd[1305]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+2026-01-27T11:42:52.142205+00 smd sshd[1312]: Registered signal handlers for user admin 192.168.72.55 port 55493
+2026-01-27T11:42:52.142306+00 smd sshd[1312]: Transferred with user admin 192.168.72.55 port 55493: sent 3224, received 1608 bytes
+2026-01-27T11:42:52.203205+00 smd sshd[1305]: pam_unix(sshd:session): session closed for user admin
+2026-01-27T11:42:52.257420+00 smd sshd[1317]: pam_unix(sshd:auth): user 'root' has blank passwd
+2026-01-27T11:42:52.257578+00 smd sshd[1317]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('root' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:42:52.257662+00 smd sshd[1314]: Accepted keyboard-interactive/pam for root from 192.168.72.55 port 55494 ssh2
+2026-01-27T11:42:52.262257+00 smd sshd[1314]: pam_unix(sshd:session): session opened for user root by (uid=0)
+2026-01-27T11:42:52.262557+00 smd sshd[1314]: syslogin_perform_logout: logout() returned an error
+2026-01-27T11:42:52.262635+00 smd sshd[1314]: pam_unix(sshd:session): session closed for user root
+2026-01-27T11:42:52.268260+00 smd sshd[1314]: Transferred with user root 192.168.72.55 port 55494: sent 9128, received 3784 bytes
+2026-01-27T11:42:52.276534+00 smd sshd[1323]: pam_unix(sshd:auth): user 'root' has blank passwd
+2026-01-27T11:42:52.276746+00 smd sshd[1323]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('root' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:42:52.276837+00 smd sshd[1320]: Accepted keyboard-interactive/pam for root from 192.168.72.55 port 55495 ssh2
+2026-01-27T11:42:52.278723+00 smd sshd[1320]: pam_unix(sshd:session): session opened for user root by (uid=0)
+2026-01-27T11:42:52.278858+00 smd sshd[1320]: syslogin_perform_logout: logout() returned an error
+2026-01-27T11:42:52.278942+00 smd sshd[1320]: pam_unix(sshd:session): session closed for user root
+2026-01-27T11:42:52.284680+00 smd sshd[1320]: Transferred with user root 192.168.72.55 port 55495: sent 166632, received 3208 bytes
+2026-01-27T11:44:38.937724+00 smd sshd[1338]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('admin' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:44:38.956500+00 smd sshd[1335]: Accepted keyboard-interactive/pam for admin from 192.168.72.55 port 55502 ssh2
+2026-01-27T11:44:38.959468+00 smd sshd[1335]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+2026-01-27T11:44:38.962776+00 smd sshd[1339]: Registered signal handlers for user admin 192.168.72.55 port 55502
+2026-01-27T11:44:39.050933+00 smd sshd[1339]: Transferred with user admin 192.168.72.55 port 55502: sent 7976, received 1608 bytes
+2026-01-27T11:44:39.058684+00 smd sshd[1335]: pam_unix(sshd:session): session closed for user admin
+2026-01-27T11:44:39.700056+00 smd sshd[1344]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('admin' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:44:39.702817+00 smd sshd[1341]: Accepted keyboard-interactive/pam for admin from 192.168.72.55 port 55503 ssh2
+2026-01-27T11:44:39.707746+00 smd sshd[1341]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+2026-01-27T11:44:39.712240+00 smd sshd[1345]: Registered signal handlers for user admin 192.168.72.55 port 55503
+2026-01-27T11:44:39.812491+00 smd sshd[1345]: Transferred with user admin 192.168.72.55 port 55503: sent 7976, received 1608 bytes
+2026-01-27T11:44:39.824202+00 smd sshd[1341]: pam_unix(sshd:session): session closed for user admin
+2026-01-27T11:44:40.036626+00 smd sshd[1350]: pam_unix(sshd:auth): user 'root' has blank passwd
+2026-01-27T11:44:40.037119+00 smd sshd[1350]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('root' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:44:40.039200+00 smd sshd[1347]: Accepted keyboard-interactive/pam for root from 192.168.72.55 port 55504 ssh2
+2026-01-27T11:44:40.044007+00 smd sshd[1347]: pam_unix(sshd:session): session opened for user root by (uid=0)
+2026-01-27T11:44:40.135829+00 smd sshd[1347]: syslogin_perform_logout: logout() returned an error
+2026-01-27T11:44:40.141700+00 smd sshd[1347]: pam_unix(sshd:session): session closed for user root
+2026-01-27T11:44:40.148742+00 smd sshd[1347]: Transferred with user root 192.168.72.55 port 55504: sent 8904, received 3784 bytes
+2026-01-27T11:44:40.361096+00 smd sshd[1356]: pam_unix(sshd:auth): user 'root' has blank passwd
+2026-01-27T11:44:40.361625+00 smd sshd[1356]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('root' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:44:40.365285+00 smd sshd[1353]: Accepted keyboard-interactive/pam for root from 192.168.72.55 port 55505 ssh2
+2026-01-27T11:44:40.380791+00 smd sshd[1353]: pam_unix(sshd:session): session opened for user root by (uid=0)
+2026-01-27T11:44:40.504929+00 smd sshd[1353]: syslogin_perform_logout: logout() returned an error
+2026-01-27T11:44:40.557500+00 smd sshd[1353]: pam_unix(sshd:session): session closed for user root
+2026-01-27T11:44:40.563696+00 smd sshd[1353]: Transferred with user root 192.168.72.55 port 55505: sent 177816, received 3224 bytes
+2026-01-27T11:45:07.837544+00 smd sshd[1365]: pam_unix(sshd:auth): user 'root' has blank passwd
+2026-01-27T11:45:07.838465+00 smd sshd[1365]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('root' entry 'ssh'[ssh 192.168.72.50])
+2026-01-27T11:45:07.842345+00 smd sshd[1362]: Accepted keyboard-interactive/pam for root from 192.168.72.50 port 46160 ssh2
+2026-01-27T11:45:07.851912+00 smd sshd[1362]: pam_unix(sshd:session): session opened for user root by (uid=0)
+2026-01-27T11:46:43.395152+00 smd sshd[1377]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('admin' entry 'ssh'[ssh 192.168.72.50])
+2026-01-27T11:46:43.399027+00 smd sshd[1374]: Accepted keyboard-interactive/pam for admin from 192.168.72.50 port 40732 ssh2
+2026-01-27T11:46:43.407514+00 smd sshd[1374]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+2026-01-27T11:46:43.412739+00 smd sshd[1378]: Registered signal handlers for user admin 192.168.72.50 port 40732
+2026-01-27T11:47:43.077975+00 smd sshd[1386]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('admin' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:47:43.082168+00 smd sshd[1383]: Accepted keyboard-interactive/pam for admin from 192.168.72.55 port 55533 ssh2
+2026-01-27T11:47:43.090285+00 smd sshd[1383]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+2026-01-27T11:47:43.096208+00 smd sshd[1387]: Registered signal handlers for user admin 192.168.72.55 port 55533
+2026-01-27T11:47:43.206106+00 smd sshd[1387]: Transferred with user admin 192.168.72.55 port 55533: sent 3064, received 1608 bytes
+2026-01-27T11:47:43.213033+00 smd sshd[1383]: pam_unix(sshd:session): session closed for user admin
+2026-01-27T11:47:43.899486+00 smd sshd[1392]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('admin' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:47:43.903059+00 smd sshd[1389]: Accepted keyboard-interactive/pam for admin from 192.168.72.55 port 55534 ssh2
+2026-01-27T11:47:43.910563+00 smd sshd[1389]: pam_unix(sshd:session): session opened for user admin by (uid=0)
+2026-01-27T11:47:43.916259+00 smd sshd[1393]: Registered signal handlers for user admin 192.168.72.55 port 55534
+2026-01-27T11:47:44.023230+00 smd sshd[1393]: Transferred with user admin 192.168.72.55 port 55534: sent 2904, received 1608 bytes
+2026-01-27T11:47:44.029087+00 smd sshd[1389]: pam_unix(sshd:session): session closed for user admin
+2026-01-27T11:47:44.246381+00 smd sshd[1398]: pam_unix(sshd:auth): user 'root' has blank passwd
+2026-01-27T11:47:44.247244+00 smd sshd[1398]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('root' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:47:44.250868+00 smd sshd[1395]: Accepted keyboard-interactive/pam for root from 192.168.72.55 port 55535 ssh2
+2026-01-27T11:47:44.258126+00 smd sshd[1395]: pam_unix(sshd:session): session opened for user root by (uid=0)
+2026-01-27T11:47:44.366379+00 smd sshd[1395]: syslogin_perform_logout: logout() returned an error
+2026-01-27T11:47:44.368284+00 smd sshd[1395]: pam_unix(sshd:session): session closed for user root
+2026-01-27T11:47:44.382889+00 smd sshd[1395]: Transferred with user root 192.168.72.55 port 55535: sent 9096, received 3784 bytes
+2026-01-27T11:47:44.608667+00 smd sshd[1404]: pam_unix(sshd:auth): user 'root' has blank passwd
+2026-01-27T11:47:44.609613+00 smd sshd[1404]: pam_tally3(sshd:auth): Tally3 disabled for maintainers mode('root' entry 'ssh'[ssh 192.168.72.55])
+2026-01-27T11:47:44.613325+00 smd sshd[1401]: Accepted keyboard-interactive/pam for root from 192.168.72.55 port 55536 ssh2
+2026-01-27T11:47:44.620873+00 smd sshd[1401]: pam_unix(sshd:session): session opened for user root by (uid=0)

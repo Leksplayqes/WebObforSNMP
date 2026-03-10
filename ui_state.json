@@ -1,0 +1,92 @@
+{
+  "api_base_url": "http://192.168.72.55:8000",
+  "device_info": {
+    "name": "OSM-KMv3",
+    "ipaddr": "192.168.72.70",
+    "slots_dict": {
+      "3": "STM-64M",
+      "4": "STM-64M",
+      "5": "Eth1000M",
+      "6": "63E1M",
+      "7": "STM-1/4",
+      "8": "Eth100M",
+      "9": "KC-M12",
+      "10": "KC-M12",
+      "12": "STM-16M",
+      "13": "STM-16M"
+    },
+    "viavi": {
+      "NumOne": {
+        "ipaddr": "192.168.72.231",
+        "port": 8006,
+        "typeofport": {
+          "Port1": "STM-16",
+          "Port2": "STM-16"
+        }
+      },
+      "NumTwo": {
+        "ipaddr": "",
+        "port": 8006,
+        "typeofport": {
+          "Port1": "",
+          "Port2": ""
+        }
+      }
+    },
+    "loopback": {
+      "slot": 3,
+      "port": 1
+    }
+  },
+  "ip_address_input": "192.168.72.70",
+  "password_input": "Qaz11111!",
+  "snmp_type_select": "SnmpV3",
+  "test_type_radio": "sync",
+  "viavi_config": {
+    "NumOne": {
+      "ipaddr": "192.168.72.231",
+      "typeofport": {
+        "Port1": "STM-16",
+        "Port2": "STM-16"
+      }
+    },
+    "NumTwo": {
+      "ipaddr": "",
+      "typeofport": {
+        "Port1": "",
+        "Port2": ""
+      }
+    }
+  },
+  "wiring": [
+    {
+      "viavi_device": "NumOne",
+      "viavi_port": "Port2",
+      "viavi_interface": "STM-16",
+      "dev_slot": "12",
+      "dev_port": "1",
+      "dev_interface": "STM-16M",
+      "cable_id": ""
+    }
+  ],
+  "slot_loopback": 12,
+  "port_loopback": 2,
+  "selected_tests": [
+    "unit_tests/test_syncV7v2.py::test_STM_E1_create_del"
+  ],
+  "selected_test_labels": [
+    "Создание/удаление приоритетов (STM/E1)"
+  ],
+  "selected_tests_by_type": {
+    "alarm": [],
+    "sync": [
+      "unit_tests/test_syncV7v2.py::test_STM_E1_create_del"
+    ],
+    "stat": [],
+    "comm": []
+  },
+  "active_slots": {
+    "4": "STM-64M"
+  },
+  "current_job_id": "10-03-2026 13-25 - sync tests"
+}
