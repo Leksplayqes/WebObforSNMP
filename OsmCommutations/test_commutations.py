@@ -51,7 +51,7 @@ async def test_commutationsVC4(w, vc4):
     slot, port = int(w["dev_slot"]), int(w["dev_port"])
     block, dev, p_dev = w["viavi_interface"], w["viavi_device"], w["viavi_port"]
 
-    await delete_commutation("1.3.6.1.4.1.5756.3.3.1.2.5.2.0")
+    await delete_commutation()
     await create_commutationVC4(slot, port, vc4)
 
     VIAVI_secndStage(vc="vc-4", device_name=dev, port_name=p_dev)
@@ -70,7 +70,7 @@ async def test_commutationsVC4(w, vc4):
 
     res = VIAVI_get_command(block, ':SENSE:DATA? TEST:SUMMARY', "vc-4", dev, p_dev)
     assert res == '"normal"', f"Трафик не в норме до вставки ошибок: {res}"
-
+    await asyncio.sleep(1)
     VIAVI_set_command(block, ":SOURce:PAYLOAD:BERT:INSert:TSE", "", "vc-4", dev, p_dev)
     await asyncio.sleep(2)
 
@@ -112,7 +112,7 @@ async def test_commutationsVC12(w, vc4, vc12):
     slot, port = str(w["dev_slot"]), str(w["dev_port"])
     block, dev, p_dev = w["viavi_interface"], w["viavi_device"], w["viavi_port"]
 
-    await delete_commutation(OIDS["switch"]["del_comm"])
+    await delete_commutation()
     await create_commutationVC12(int(slot), int(port), vc4, vc12)
 
     klm = klm_numbers(vc12).split(".")
@@ -148,8 +148,7 @@ TEST_PARAMS = [
     ((slot, vc), f"Slot:{slot}-VC12:{vc}")
     for slot, val in oidsSNMP()["slots_dict"].items()
     if "E1" in val and str(slot) in OIDS_SNMP.get("active_slots", {})
-    for vc in range(1, OIDS["blockOID"]["quantPort"][val] + 1)
-]
+    for vc in range(1, OIDS["blockOID"]["quantPort"][val] + 1)]
 
 
 @pytest.mark.asyncio
@@ -158,13 +157,13 @@ TEST_PARAMS = [
     [p[0] for p in TEST_PARAMS],
     ids=[p[1] for p in TEST_PARAMS]
 )
-async def test_my_logic(slot, vc):
+async def test_commutationsE1(slot, vc):
     node = next(w for w in OIDS_VIAVI["wiring"] if "STM" in w["dev_interface"])
     v_device, v_port, block = node["viavi_device"], node["viavi_port"], node["viavi_interface"]
     slot_stm, port_stm = int(node["dev_slot"]), int(node["dev_port"])
     await snmp_set(f"{OIDS["loopbackOID"][OIDS_SNMP["slots_dict"][slot]]}{slot}.{vc}", Integer(1))
     VIAVI_secndStage(vc="E1", device_name=v_device, port_name=v_port)
-    await delete_commutation(OIDS["switch"]["del_comm"])
+    await delete_commutation()
     await create_commutationE1(slot, vc, slot_stm, port_stm)
     cmds = [
         f":SENSE:SDH:CHANNEL:STMN {1}",

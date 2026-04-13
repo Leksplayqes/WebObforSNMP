@@ -58,6 +58,5 @@ async def first_test_func(count_fcs):
     assert parsed_stats[4] == count_fcs * 2, f"Ошибка: Ожидали {count_fcs * 2}, получили {parsed_stats[4]}"
 
 
-
-if __name__ == "__main__":
+# if __name__ == "__main__":
     asyncio.run(first_test_func(4567))

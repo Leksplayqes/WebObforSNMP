@@ -11,6 +11,7 @@ class TestCatalogs(BaseModel):
     sync_tests: Dict[str, str] = Field(default_factory=dict)
     stat_tests: Dict[str, str] = Field(default_factory=dict)
     comm_tests: Dict[str, str] = Field(default_factory=dict)
+    other_tests: Dict[str, str] = Field(default_factory=dict)
 
 
 class TestCase(BaseModel):

@@ -33,7 +33,6 @@ def parse_snmp_log(target_oid, target_value):
             var_binds = trap_data.get("var_binds", [])
 
             for bind in var_binds:
-                print(bind, target_oid, target_value)
                 if bind.get("oid") == target_oid and str(bind.get("value")) == str(target_value):
                     return (bind.get("oid"), str(bind.get("value")))
         except json.JSONDecodeError as e:

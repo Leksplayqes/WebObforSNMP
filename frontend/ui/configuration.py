@@ -6,10 +6,11 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import streamlit as st
-
+from backend.device import upgrade_firmware_img, upgrade_firmware_block, upgrade_state
 from api import BackendApiClient, BackendApiError, normalise_nodeids
-from MainConnectFunc import oids, json_input, oidsSNMP
+from MainConnectFunc import oids, json_input, oidsSNMP, ssh_exec_commands
 from state import on_change, save_state, viavi_sync_from_widgets, on_slot_change
+from device_upgrade.slot_update import block_update_by_dev
 
 # ------------------------------- Constants -------------------------------
 
@@ -73,6 +74,10 @@ def _normalise_iface_label(v: str) -> str:
         "ETH 1000": "Eth1000",
         "1GE": "GE",
         "GIGE": "GE",
+        "STM-64M": "STM-64",
+        "STM-64": "STM-64",
+        "STM64M": "STM-64",
+        "STM64": "STM-64",
         "GIGABITETHERNET": "GE",
     }
     key = v.replace(" ", "").replace("_", "").upper()
@@ -349,10 +354,8 @@ def render_wiring_configuration() -> None:
             "info")
         return
 
-
     v_choices = [f"{p['device']}/{p['port']} ({p['iface']})" for p in viavi_ports]
     v_map = {choice: p for choice, p in zip(v_choices, viavi_ports)}
-
 
     slot_labels = [sm["label"] for sm in slot_models]
     iface_by_slotlabel: Dict[str, str] = {sm["label"]: sm["iface"] for sm in slot_models}
@@ -516,14 +519,16 @@ def _get_test_maps(catalogs, test_type: str) -> Tuple[Dict[str, str], str]:
         return catalogs.stat_tests, "tests_ms_stat"
     elif test_type == "comm":
         return catalogs.comm_tests, "tests_ms_comm"
+    elif test_type == "other":
+        return catalogs.other_tests, "tests_ms_other"
     return catalogs.sync_tests, "tests_ms_sync"
 
 
 def _sync_selected_tests(test_type: str, selected_labels: List[str], test_map: Dict[str, str]) -> None:
     tests_by_type = st.session_state.setdefault("selected_tests_by_type",
-                                                {"alarm": [], "sync": [], "stat": [], "comm": []})
+                                                {"alarm": [], "sync": [], "stat": [], "comm": [], "other": []})
     labels_by_type = st.session_state.setdefault("selected_test_labels_by_type",
-                                                 {"alarm": [], "sync": [], "stat": [], "comm": []})
+                                                 {"alarm": [], "sync": [], "stat": [], "comm": [], "other": []})
 
     selected_nodeids = [test_map[label] for label in selected_labels]
     labels_by_type[test_type] = selected_labels
@@ -644,12 +649,13 @@ def render_configuration(client: BackendApiClient) -> None:
 
         test_type = st.radio(
             "**Тип тестов**",
-            ["alarm", "sync", "stat", "comm"],
+            ["alarm", "sync", "stat", "comm", "other"],
             format_func=lambda x: {
                 "alarm": "Alarm Tests",
                 "sync": "Sync Tests",
                 "stat": "Statistic Tests",
-                "comm": "Commutation Tests"
+                "comm": "Commutation Tests",
+                "other": "Other Tests"
             }.get(x, x),
             horizontal=True,
             key="test_type_radio",
@@ -659,7 +665,7 @@ def render_configuration(client: BackendApiClient) -> None:
         test_map, multiselect_key = _get_test_maps(catalogs, test_type)
 
         labels_by_type = st.session_state.setdefault("selected_test_labels_by_type",
-                                                     {"alarm": [], "sync": [], "stat": [], "comm": []})
+                                                     {"alarm": [], "sync": [], "stat": [], "comm": [], "other": []})
         session_labels = labels_by_type.get(test_type, [])
 
         available_labels = list(test_map.keys())
@@ -759,6 +765,8 @@ def render_configuration(client: BackendApiClient) -> None:
                     on_change=on_change,
                 )
 
+
+        save_state()
         st.markdown("---")
         render_wiring_configuration()
         st.markdown("---")
@@ -766,19 +774,19 @@ def render_configuration(client: BackendApiClient) -> None:
     with col3:
         st.subheader("Статус устройства")
         dev = st.session_state.get("device_info")
+
         st.write(f"**Имя:** {dev.get('name') or '—'}")
         st.write(f"**IP:** {dev.get('ipaddr') or '—'}")
 
         slots = dev.get("slots_dict") or {}
         if slots:
             st.write("---")
-            st.markdown("##### Выберите слоты для тестов:")
+            st.markdown("##### Выберите блоки для тестов:")
             selected_slots = {}
             s_col1, s_col2 = st.columns(2)
 
             for i, (slot_id, slot_name) in enumerate(slots.items()):
                 target_col = s_col1 if i % 2 == 0 else s_col2
-
                 with target_col:
                     is_selected = st.checkbox(
                         label=f"{slot_id} ({slot_name})",
@@ -789,3 +797,64 @@ def render_configuration(client: BackendApiClient) -> None:
                     if is_selected:
                         selected_slots[slot_id] = slot_name
             st.session_state["active_slots"] = selected_slots
+        st.write("---")
+        st.markdown("##### Прошивка образа и блоков")
+        b1, b2 = st.columns(2)
+        start_update = False
+        with b1:
+            img_options = [None, "archive", "current"]
+            current_val = st.session_state.get("image_upgrade", None)
+
+            try:
+                start_index = img_options.index(current_val)
+            except ValueError:
+                start_index = 0
+
+            st.selectbox(
+                "Image",
+                options=img_options,
+                index=start_index,
+                key="image_upgrade"
+            )
+
+            if st.button("UPD IMG", key="img_upd_start"):
+                payload = {"image": st.session_state.get("image_upgrade")}
+                client.upgrade_firmware_img(payload)
+                st.session_state.show_upgrade_log = True
+                st.rerun()
+        with b2:
+            st.selectbox("Block", [None, "all", "slots"],
+                         index=_safe_index([None, "all", "slots"], st.session_state.get("block_upgrade", "")),
+                         key="block_upgrade")
+            st.multiselect("Выберите блоки",
+                           options=[f"{k}: {v}" for k, v in
+                                    st.session_state.get("device_info", {}).get("slots_dict", {}).items()],
+                           default=None, key="block_choose")
+            if st.button("UPD BLOCK", key="block_upd_start"):
+                payload = {
+                    "block_type": st.session_state.get("block_upgrade"),
+                    "slots": st.session_state.get("block_choose")
+                }
+                client.upgrade_firmware_block(payload)
+                st.session_state.show_upgrade_log = True
+                st.rerun()
+        if st.session_state.get("show_upgrade_log"):
+            st.divider()
+
+            status_data = client.get_upgrade_status()
+            current_log = status_data.get("log", "Ожидание данных...")
+            is_running = status_data.get("is_running", False)
+
+            st.write("###  Консоль процесса:")
+
+            with st.container(height=500, border=True):
+                st.code(current_log, language="bash")
+
+            if is_running:
+                time.sleep(2)
+                st.rerun()
+            else:
+                st.success("✅ Процесс прошивки завершен!")
+                if st.button("Очистить и закрыть консоль", key="close_log_btn"):
+                    st.session_state.show_upgrade_log = False
+                    st.rerun()

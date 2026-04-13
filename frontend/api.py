@@ -6,7 +6,8 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import requests
 
-from shared.catalogs import ALARM_TESTS_CATALOG, SYNC_TESTS_CATALOG, STAT_TEST_CATALOG, COMM_TEST_CATALOG
+from shared.catalogs import ALARM_TESTS_CATALOG, SYNC_TESTS_CATALOG, STAT_TEST_CATALOG, COMM_TEST_CATALOG, \
+    OTHER_TEST_CATALOG
 
 from models import (
     MaskEnable,
@@ -26,7 +27,6 @@ class BackendApiError(RuntimeError):
 
 
 class BackendApiClient:
-    """Typed client wrapper around backend REST endpoints."""
 
     def __init__(self, base_url: str, *, default_timeout: int = 100) -> None:
         self._base_url = base_url.rstrip("/")
@@ -117,7 +117,8 @@ class BackendApiClient:
                 "alarm_tests": ALARM_TESTS_CATALOG,
                 "sync_tests": SYNC_TESTS_CATALOG,
                 "stat_tests": STAT_TEST_CATALOG,
-                "comm_tests": COMM_TEST_CATALOG
+                "comm_tests": COMM_TEST_CATALOG,
+                "other_tests": OTHER_TEST_CATALOG
             }
         catalogs = TestCatalogs.model_validate(data or {})
         self._catalog_cache = (now, catalogs)
@@ -214,6 +215,18 @@ class BackendApiClient:
         data = self._post("/device/unmask", payload, timeout=50)
         return MaskEnable.model_validate(data or {})
 
+    def upgrade_firmware_img(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        data = self._ensure_envelope(self._post("/firmware/upgrade/img", payload, timeout=300))
+        return data
+
+    def get_upgrade_status(self) -> Dict[str, Any]:
+        return self._ensure_envelope(self._get("/firmware/upgrade/log"))
+
+    def upgrade_firmware_block(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        data = self._ensure_envelope(self._post("/firmware/upgrade/block", payload, timeout=300))
+        return data
+
+    # Traps -----------------------------------------------------------
     def traps_start(self) -> dict:
         return self._ensure_envelope(self._post("/traps/start"))
 

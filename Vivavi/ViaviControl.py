@@ -15,7 +15,7 @@ WAIT_AFTER_EXIT_SEC = 0.3
 WAIT_AFTER_LAUNCH_SEC = 30
 
 
-# ====================== МОДЕЛЬ ПОРТА VIAVI ======================
+# ====================== ПОРТА VIAVI ======================
 
 @dataclass(frozen=True)
 class ViaviPort:
@@ -26,7 +26,7 @@ class ViaviPort:
     port_type: str
 
 
-# ====================== НИЗКОУРОВНЕВЫЕ ФУНКЦИИ ======================
+# ====================== Работа с сокетом ======================
 
 def create_socket_connection(ipaddr: str, port: int) -> Optional[socket.socket]:
     if not ipaddr or not port:
@@ -135,18 +135,6 @@ def find_ports_by_type(port_type: str) -> List[ViaviPort]:
     return [vp for vp in iter_viavi_ports() if vp.port_type == t]
 
 
-def set_viavi_port_type(device_name: str, port_name: str, new_type: str) -> Optional[ViaviPort]:
-    try:
-        json_input(
-            ["VIAVIcontrol", "settings", device_name, "typeofport", port_name],
-            str(new_type),
-        )
-    except Exception as exc:
-        logger.error("[VIAVI] Failed to update port type: %s", exc)
-        return None
-    return find_port_by_device_and_port(device_name, port_name)
-
-
 # ====================== ПРИЛОЖЕНИЯ / ВЫБОР ИНСТАНСА ======================
 
 def _resolve_app_name(port_type: str, vc: str) -> Optional[str]:
@@ -173,9 +161,6 @@ def _base_from_app_name(app_name: str) -> str:
 
 
 def _family_base(base: str) -> str:
-    """База 'семейства' приложения, чтобы понять, что на порту уже запущен STM16, но другой VC.
-    Для STM-конфигов вида ...Vc4Tu12Vc12 -> семейство это ...Vc4
-    """
     b = (base or "").strip()
     return b.split("Tu", 1)[0] if "Tu" in b else b
 
@@ -337,7 +322,6 @@ def VIAVI_secndStage(
             client.send(b":OUTPUT:OPTIC ON\n")
 
 
-
 # ====================== КОМАНДЫ УПРАВЛЕНИЯ / ЧТЕНИЯ ======================
 
 def _resolve_viavi_port(block: str, device_name: Optional[str], port_name: Optional[str]) -> Optional[ViaviPort]:
@@ -396,7 +380,6 @@ def VIAVI_get_command(
             return "-"
         _send_line(client, command)
         return _recv_str(client) or "-"
-
 
 
 

@@ -8,10 +8,9 @@ from unit_tests.SnmpV7Sync import clearprior, set_prior, del_prior, QL_up_down, 
     extPortConf, extThreshAlarm, extSourceID, prior_status, set_E1_QL, STM1_ext_port, STM1_QL_level, SETS_create, \
     STM_alarm_status, syncSTMenable, setsQL
 from unit_tests.SnmpV7alarm import check_alarmPH, alarmplusmask
-from Vivavi.ViaviControl import VIAVI_set_command, VIAVI_get_command
+from Vivavi.ViaviControl import VIAVI_set_command, VIAVI_get_command, VIAVI_secndStage
 from unit_tests.sshV7 import get_ssh_value, bd_alarm_get
 from TRAP_analyze.ParseTrapLog import parse_snmp_log, clear_trap_log, wait_trap
-
 import time
 import asyncio
 
@@ -115,7 +114,6 @@ def test_extPortID(priornum, portnum):
 '''Проверка занятия и очистки шины, при создании и удалении приоритета синхронизации'''
 
 
-
 @pytest.mark.parametrize("slot, portnum, priornum",
                          [(slot, portnum, priornum)
                           for slot, val in SLOTS_DICT.items()
@@ -206,7 +204,7 @@ def test_extSourceID(slot, portnum, blockport):
     assert str(extSrcID) == OIDS["blockOID"]["statusOID"][block] + slot + f'.{blockport}'
     assert bin(int(get_ssh_value(KC_SLOT, '24')))[-int(portnum)] == "1"
 
-    extPort = get_ssh_value(slot, OIDS["extSourceSTM"][block])[-int(portnum)]
+    extPort = get_ssh_value(slot, OIDS["syncOID"]["extSourceSTM"][block])[-int(portnum)]
     assert OIDS["syncOID"]["prior_dict"][extPort] == str(blockport)
 
 
@@ -217,55 +215,58 @@ def test_extSourceID(slot, portnum, blockport):
                          [(int(w["dev_slot"]), int(w["dev_port"]), priornum)
                           for w in OIDS_VIAVI["wiring"]
                           if "STM" in w["dev_interface"] and w["dev_slot"] in OIDS_SNMP["active_slots"]
-                          for priornum in range(1, 9)
-                          if str(asyncio.run(check_alarmPH(int(w["dev_slot"]), int(w["dev_port"])))) not in ["1", "2"]])
+                          for priornum in range(1, 9)])
 def test_prior_statusSTM(slot, portnum, priornum):
-    slot = slot
+    prOSMK = {"1": "-2", "2": "-3", "3": "-4", "4": "-5", "5": "-7", "6": "-8", "7": "-9", "8": "-10"}
+    slot, portnum = str(slot), str(portnum)
     asyncio.run(clearprior())
     clear_trap_log()
     snmpSTM_set = asyncio.run(set_prior(slot, str(priornum), str(portnum)))
-    time.sleep(80)
+    for i in OIDS_VIAVI["wiring"]:
+        if str(i["dev_slot"]) == slot and i["dev_port"] == portnum:
+            VIAVI_secndStage("vc-4", device_name=i["viavi_device"], port_name=i["viavi_port"])
+            VIAVI_set_command(i["viavi_interface"], ":SOURCE:SDH:MS:Z1A:BYTE:VIEW", "2", "vc-4", i["viavi_device"],
+                              i["viavi_port"])
+            time.sleep(80)
+            KCpriorAlarm = get_ssh_value(KC_SLOT, '3A')
 
-    prstatustlnt = get_ssh_value(KC_SLOT, '3A')
-    assert asyncio.run(prior_status(priornum)) == 1
-    assert bin(int(prstatustlnt, 16)).replace('b', '')[-priornum] == '0'
+            assert asyncio.run(prior_status(priornum)) == 1
+            assert bin(int(KCpriorAlarm, 16)).replace('b', '')[
+                       -priornum if OIDS_SNMP["name"] != "OSM-Kv7" else int(prOSMK[str(priornum)])] == "0"
+            assert str(asyncio.run(snmp_get(OIDS["syncOID"]["priorACTIVE"]))) == str(int(priornum) - 1)
 
-    KCpriorAlarm = get_ssh_value(KC_SLOT, '3A')
-    assert bin(int(KCpriorAlarm, 16)).replace('b', '')[-priornum] == "0"
-    assert str(asyncio.run(snmp_get(OIDS["syncOID"]["priorACTIVE"]))) == str(int(priornum) - 1)
+            trap_log = parse_snmp_log(OIDS["syncOID"]["priorSTATUS"] + f"{priornum}", 2)
+            assert trap_log
 
-    trap_log = parse_snmp_log(OIDS["syncOID"]["priorSTATUS"] + f"{priornum}", 2)
-    assert trap_log
+            tlntSTM_set = get_ssh_value(KC_SLOT,
+                                        OIDS["priorityREG"][str(priornum)])
+            expected_snmp = OIDS["blockOID"]["statusOID"][SLOTS_DICT[slot]] + slot + f'.{portnum}'
+            assert str(snmpSTM_set) == expected_snmp and tlntSTM_set != '0000'
 
-    tlntSTM_set = get_ssh_value(KC_SLOT,
-                                OIDS["priorityREG"][str(priornum)])
-    expected_snmp = OIDS["blockOID"]["statusOID"][SLOTS_DICT[slot]] + slot + f'.{portnum}'
-    assert str(snmpSTM_set) == expected_snmp and tlntSTM_set != '0000'
-
-    snmpSTM_del = asyncio.run(del_prior(str(priornum)))
-    tlntSTM_del = get_ssh_value(KC_SLOT,
-                                OIDS["priorityREG"][str(priornum)])
-    assert snmpSTM_del == OIDS["equipOID"]["portNull"] and tlntSTM_del == '0000'
+            snmpSTM_del = asyncio.run(del_prior(str(priornum)))
+            tlntSTM_del = get_ssh_value(KC_SLOT,
+                                        OIDS["priorityREG"][str(priornum)])
+            assert snmpSTM_del == OIDS["equipOID"]["portNull"] and tlntSTM_del == '0000'
 
 
 '''Проверка уровня качества на входе блоков СТМ'''
 
 
-@pytest.mark.parametrize("slot, port, ql",
-                         [(int(w["dev_slot"]), int(w["dev_port"]), ql)
-                          for w in OIDS_VIAVI["wiring"]
-                          if "STM" in w["dev_interface"] and str(
-                             asyncio.run(check_alarmPH(int(w["dev_slot"]), int(w["dev_port"])))) == "0" and w["dev_slot"] in OIDS_SNMP["active_slots"]
-                          for ql in OIDS["qualDICT"]])
+@pytest.mark.parametrize("slot, port, ql", [
+    (int(w["dev_slot"]), int(w["dev_port"]), ql)
+    for w in OIDS_VIAVI["wiring"]
+    if "STM" in w["dev_interface"] and w["dev_slot"] in OIDS_SNMP["active_slots"]
+    for ql in OIDS["qualDICT"]])
 def test_QLSTM_get(slot, port, ql):
     slot, port = str(slot), str(port)
     for i in OIDS_VIAVI["wiring"]:
         if i["dev_slot"] == slot and i["dev_port"] == port:
-            VIAVI_set_command(SLOTS_DICT[slot], ":SOURCE:SDH:MS:Z1A:BYTE:VIEW", ql, "vc-4", i["viavi_device"],
+            VIAVI_secndStage("vc-4", device_name=i["viavi_device"], port_name=i["viavi_port"])
+            VIAVI_set_command(i["viavi_interface"], ":SOURCE:SDH:MS:Z1A:BYTE:VIEW", ql, "vc-4", i["viavi_device"],
                               i["viavi_port"])
+            time.sleep(0.7)
             reg_value = get_ssh_value(slot, OIDS['syncOID']['stmQLgetREG'][SLOTS_DICT[slot]][port])[-1]
             assert reg_value == OIDS["qualDICT"][ql]
-            time.sleep(0.7)
             snmp_ql = asyncio.run(STM1_QL_level(slot, port))
             assert OIDS["qualDICT"][str(snmp_ql)] == OIDS["qualDICT"][ql]
 
@@ -276,20 +277,21 @@ def test_QLSTM_get(slot, port, ql):
 @pytest.mark.parametrize("slot, port, ql",
                          [(int(w["dev_slot"]), int(w["dev_port"]), ql)
                           for w in OIDS_VIAVI["wiring"]
-                          if "STM" in w["dev_interface"] and str(
-                             asyncio.run(check_alarmPH(int(w["dev_slot"]), int(w["dev_port"])))) == "0"
+                          if "STM" in w["dev_interface"]
                           for ql in OIDS["qualDICT"]])
 def test_QLSTM_set(clear_createSETS, slot, port, ql):
     slot, port = str(slot), str(port)
     for i in OIDS_VIAVI["wiring"]:
         if i["dev_slot"] == slot and i["dev_port"] == port:
+            VIAVI_secndStage("vc-4", device_name=i["viavi_device"], port_name=i["viavi_port"])
             asyncio.run(syncSTMenable(slot, port))
             asyncio.run(setsQL(ql))
             time.sleep(20)
             reg_value = get_ssh_value(slot, OIDS["syncOID"]["stmQLset"][SLOTS_DICT[slot]][port])
+
             assert OIDS["qualDICT"][str(ql)] in reg_value
 
-            resQLstm = VIAVI_get_command(SLOTS_DICT[slot],
+            resQLstm = VIAVI_get_command(i["viavi_interface"],
                                          ":SENSE:DATA? INTEGER:SONET:LINE:S1:SYNC:STATUS", "vc-4", i["viavi_device"],
                                          i["viavi_port"])
             expected_ql = OIDS_VIAVI["reqSTMql"][resQLstm[2:-1]]
@@ -301,7 +303,7 @@ def test_QLSTM_set(clear_createSETS, slot, port, ql):
 
 @pytest.mark.parametrize('slot, priornum, portnum',
                          [(slot, priornum, portnum)
-                          for slot in SLOTS_DICT if 'E1' in SLOTS_DICT[slot]
+                          for slot in SLOTS_DICT if 'E1' in SLOTS_DICT[slot] and slot in OIDS_SNMP["active_slots"]
                           for priornum in [str(x) for x in range(1, 9)]
                           for portnum in range(1, OIDS["blockOID"]["quantPort"][SLOTS_DICT[slot]])])
 def test_QLE1_set(slot, priornum, portnum):
@@ -321,7 +323,7 @@ def test_QLE1_set(slot, priornum, portnum):
 @pytest.mark.parametrize('extport, slot, portnum',
                          [pytest.param(extport, slot, portnum, id=f"extport-{extport}, slot-{slot}, portnum-{portnum}")
                           for extport in range(1, 3)
-                          for slot in SLOTS_DICT if "STM" in SLOTS_DICT[slot]
+                          for slot in SLOTS_DICT if "STM" in SLOTS_DICT[slot] and slot in OIDS_SNMP["active_slots"]
                           for portnum in range(1, OIDS["blockOID"]["quantPort"][SLOTS_DICT[slot]] + 1)])
 def test_STM_extport(extport, slot, portnum):
     extportvalue = asyncio.run(STM1_ext_port(extport, portnum, slot))
@@ -338,7 +340,7 @@ def test_STM_extport(extport, slot, portnum):
 @pytest.mark.parametrize('extport, slot, portnum',
                          [pytest.param(extport, slot, portnum, id=f"extport-{extport}, slot-{slot}, portnum-{portnum}")
                           for extport in range(1, 3)
-                          for slot in SLOTS_DICT if "STM" in SLOTS_DICT[slot]
+                          for slot in SLOTS_DICT if "STM" in SLOTS_DICT[slot] and slot in OIDS_SNMP["active_slots"]
                           for portnum in range(1, OIDS["blockOID"]["quantPort"][SLOTS_DICT[slot]] + 1)])
 def test_STM_QL_extport(extport, slot, portnum):
     asyncio.run(STM1_ext_port(extport, portnum, slot))
@@ -350,43 +352,40 @@ def test_STM_QL_extport(extport, slot, portnum):
 
 '''Проверка аварий по порогам статистики для каждого интерфейсного блока и каждого качества на приеме'''
 
-@pytest.mark.skip
-@pytest.mark.parametrize('extPort, priornum, slot, portnum, QL ',
-                         [(extPort, priornum, int(w["dev_slot"]), int(w["dev_port"]), QL)
+
+@pytest.mark.parametrize('extPort, slot, portnum, QL ',
+                         [(extPort, int(w["dev_slot"]), int(w["dev_port"]), QL)
                           for w in OIDS_VIAVI["wiring"]
-                          if "STM" in w["dev_interface"]
+                          if "STM" in w["dev_interface"] and w["dev_slot"] in OIDS_SNMP["active_slots"]
                           for extPort in range(1, 3)
-                          for priornum in range(1, 9)
-                          if str(asyncio.run(check_alarmPH(int(w["dev_slot"]), int(w["dev_port"])))) in ["0", "64"]
                           for QL in OIDS["qualDICT"]
                           ])
-def test_ThresQL_AlarmBlock(extPort, priornum, slot, portnum, QL):
-    slot, portnum, priornum = str(slot), str(portnum), str(priornum)
+def test_ThresQL_AlarmBlock(extPort, slot, portnum, QL):
+    slot, portnum = str(slot), str(portnum)
+    asyncio.run(STM1_ext_port(extPort, slot, portnum))
     for i in OIDS_VIAVI["wiring"]:
         if i["dev_slot"] == slot and i["dev_port"] == portnum:
-            print(extPort)
-            VIAVI_set_command(SLOTS_DICT[slot], ":SOURCE:SDH:MS:Z1A:BYTE:VIEW", QL, "vc-4", i["viavi_device"],
+            VIAVI_set_command(i["viavi_interface"], ":SOURCE:SDH:MS:Z1A:BYTE:VIEW", QL, "vc-4", i["viavi_device"],
                               i["viavi_port"])
-            print(f"QL IS {QL}")
             if QL != "0" and QL != "15":
                 for QLblock in [2, 4, 8, 11]:
+                    asyncio.run(extThreshQL(extPort, QLblock))
                     if int(QLblock) >= int(QL) and int(QL) not in [0, 15]:
                         time.sleep(3)
-                        print(f"match {QLblock} --- {QL} ")
                         QLalarmdatch = str(asyncio.run(extThreshAlarm(str(extPort))))
                         assert QLalarmdatch == "0"
                         assert bin(int(get_ssh_value(find_KS(), "4e")))[-int(extPort)] in ["0", "b"]
                     else:
-                        print(f"BaDmatch {QLblock} --- {QL} ")
-                        print(False)
-                        time.sleep(10)
+                        time.sleep(3)
                         QLalarmdatch = str(asyncio.run(extThreshAlarm(str(extPort))))
                         assert QLalarmdatch == "2"
                         assert bin(int(get_ssh_value(find_KS(), "4e")))[-int(extPort)] == "1"
+                        assert bd_alarm_get(f"LOW_QL##{extPort}", OIDS["syncOID"]["extTable"]["extThreshAlarm"])
             else:
-                time.sleep(10)
+                time.sleep(3)
                 assert str(asyncio.run(extThreshAlarm(str(extPort)))) == "2"
                 assert bin(int(get_ssh_value(find_KS(), "4e")))[-int(extPort)] == "1"
+                assert bd_alarm_get(f"LOW_QL##{extPort}", OIDS["syncOID"]["extTable"]["extThreshAlarm"])
 
 
 '''Проверка аварии по порогам с выбранным ГСЭ, как источник вн синхронизации'''

@@ -17,9 +17,20 @@ class LogsResponse(BaseModel):
     logs: List[LogEntry]
 
 
+class UpgradeRequestBlock(BaseModel):
+    block_type: Optional[str] = None
+    slots: List[str] = []
+
+
+class UpgradeRequestImg(BaseModel):
+    image: Optional[str] = None
+
+
+
 class LoopbackSettings(BaseModel):
     slot: Optional[int] = None
     port: Optional[int] = None
+
 
 class ViaviTypeOfPort(BaseModel):
     Port1: str = "STM-1"

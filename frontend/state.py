@@ -21,7 +21,7 @@ def _default_viavi_config() -> Dict[str, Dict[str, Dict[str, str]]]:
 def _default_selected_tests_map() -> Dict[str, List[str]]:
     """Return the default storage for alarm and sync test selections."""
 
-    return {"alarm": [], "sync": [], "stat": [], "comm": []}
+    return {"alarm": [], "sync": [], "stat": [], "comm": [], "other": []}
 
 
 def initialize_session_state() -> None:
@@ -51,6 +51,8 @@ def load_state() -> Dict[str, Any]:
 
 
 def save_state() -> None:
+    json_input(["CurrentEQ", "loopback", "slot"], st.session_state.get("slot_loopback", ""))
+    json_input(["CurrentEQ", "loopback", "port"], st.session_state.get("port_loopback", ""))
     state = {
         "api_base_url": st.session_state.get("api_base_url", DEFAULT_API_BASE_URL),
         "device_info": st.session_state.get("device_info"),
@@ -204,4 +206,18 @@ def viavi_sync_from_widgets() -> None:
     viavi["NumTwo"]["ipaddr"] = st.session_state.get("viavi2_ip", "")
     viavi["NumTwo"]["typeofport"]["Port1"] = st.session_state.get("viavi2_port1", "")
     viavi["NumTwo"]["typeofport"]["Port2"] = st.session_state.get("viavi2_port2", "")
+
+    json_input(["VIAVIcontrol", "settings", "NumOne", "ipaddr"],
+               st.session_state.get("viavi1_ip", ""))
+    json_input(["VIAVIcontrol", "settings", "NumTwo", "ipaddr"],
+               st.session_state.get("viavi2_ip", ""))
+    json_input(["VIAVIcontrol", "settings", "NumOne", "typeofport", "Port1"],
+               st.session_state.get("viavi1_port1", ""))
+    json_input(["VIAVIcontrol", "settings", "NumOne", "typeofport", "Port2"],
+               st.session_state.get("viavi1_port2", ""))
+    json_input(["VIAVIcontrol", "settings", "NumTwo", "typeofport", "Port1"],
+               st.session_state.get("viavi2_port1", ""))
+    json_input(["VIAVIcontrol", "settings", "NumTwo", "typeofport", "Port2"],
+               st.session_state.get("viavi2_port2", ""))
     save_state()
+

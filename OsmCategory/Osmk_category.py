@@ -112,47 +112,91 @@ def bytes_from_snmp_value(val) -> bytes:
 async def config_category_equipment():
     var = get_full_ssh_output("zcat /var/volatile/tmp/osmkm/config/category.cfg.gz")
     conf = libconf.loads(var)
-    conf.pop('release', None)
-    return conf
+    invalid_category = []
+
+    def find_category(data):
+        if isinstance(data, (dict, libconf.AttrDict)):
+            for key, value in data.items():
+                if any(c.isdigit() and c != '4' for c in str(value)):
+                    invalid_category.append([f"{key} - {value}"])
+                find_category(value)
+        elif isinstance(data, list):
+            for item in data:
+                find_category(item)
+
+    find_category(conf)
+    if invalid_category:
+        return invalid_category
+    else:
+        return True
 
 
 async def config_block_equipment(slot):
-    con_values = []
     if len(str(slot)) < 2:
         slot = f"0{slot}"
     var = get_full_ssh_output(f"zcat /var/volatile/tmp/osmkm/config/PM{slot}.INI.cfg.gz")
     conf = libconf.loads(var)
-    for i in conf:
-        z = conf[i]
-        if isinstance(z, (dict, libconf.AttrDict)):
-            for k in z:
-                for w in z[k]:
-                    if z[k][w] == 4:
-                        continue
-                    else:
-                        con_values.append([z[k][w]])
-    if con_values:
-        return False
+
+    invalid_category = []
+
+    def find_category(data):
+        if isinstance(data, (dict, libconf.AttrDict)):
+            for key, value in data.items():
+                if "Category" in str(key):
+                    if any(c.isdigit() and c != '4' for c in str(value)):
+                        invalid_category.append([f"{key} - {value}"])
+                find_category(value)
+        elif isinstance(data, list):
+            for item in data:
+                find_category(item)
+
+    find_category(conf)
+    if invalid_category:
+        return invalid_category
     else:
         return True
+
+
+async def config_category_sync():
+    var = get_full_ssh_output("zcat /var/volatile/tmp/osmkm/config/sync.cfg.gz")
+    conf = libconf.loads(var)
+    invalid_category = []
+
+    def find_category(data):
+        if isinstance(data, (dict, libconf.AttrDict)):
+            for key, value in data.items():
+                if "Category" in str(key):
+                    if any(c.isdigit() and c != '4' for c in str(value)):
+                        invalid_category.append([f"{key} - {value}"])
+                find_category(value)
+        elif isinstance(data, list):
+            for item in data:
+                find_category(item)
+
+    find_category(conf)
+    return invalid_category if invalid_category else True
 
 
 async def config_label(slot, block):
-    con_values = []
-    slotNew = slot
-    if len(str(slot)) < 2:
-        slotNew = f"0{slot}"
-    var = get_full_ssh_output(f"zcat /var/volatile/tmp/osmkm/config/PM{slotNew}.INI.cfg.gz | grep Label")
+    slot_str = f"{slot:0>2}"
+    var = get_full_ssh_output(f"zcat /var/volatile/tmp/osmkm/config/PM{slot_str}.INI.cfg.gz")
     conf = libconf.loads(var)
-    for i in conf:
-        for z in conf[i]:
-            if z != f"{block}-{slot}":
-                print(z, f"{block}-{slot}")
-                con_values.append(z)
-    if con_values:
-        return False
-    else:
-        return True
+    target_label = f"{block}-{slot}"
+    invalid_labels = []
+
+    def find_labels(data):
+        if isinstance(data, (dict, libconf.AttrDict)):
+            for key, value in data.items():
+                if "Label" in str(key):
+                    if value[0] != target_label:
+                        invalid_labels.append({key: value})
+                find_labels(value)
+        elif isinstance(data, list):
+            for item in data:
+                find_labels(item)
+
+    find_labels(conf)
+    return invalid_labels if invalid_labels else True
 
 
 async def config_mask(slot):
@@ -176,13 +220,6 @@ async def config_mask(slot):
 
     check_masks(conf)
     return con_values if con_values else True
-
-
-async def config_category_sync():
-    var = get_full_ssh_output("zcat /var/volatile/tmp/osmkm/config/sync.cfg.gz | grep ategory")
-    conf = libconf.loads(var)
-    conf.pop('release', None)
-    return conf
 
 
 async def config_loop(slot):
@@ -212,7 +249,6 @@ async def config_trace(slot, block):
         return list(set(con_values))
     else:
         return True
-
 
 
 # ----------------------------
@@ -248,7 +284,7 @@ async def process_category_equipment(equipment_data: Dict[str, list]):
         if int(depth) != 0:
             continue
         x = b"\x04" * int(length)
-        await snmp_set(str(oid), x)
+        await snmp_set(f"{oid}0", OctetString(x))
 
 
 async def reading_category_equipment(equipment_data: Dict[str, list]) -> Dict[str, Any]:
@@ -266,12 +302,10 @@ async def reading_category_equipment(equipment_data: Dict[str, list]) -> Dict[st
 
 async def process_category_sync(sync_data: Dict[str, list], priornum):
     for obj, (oid, length, depth) in sync_data.items():
-        if int(depth) != 0:
-            continue
         x = b"\x04" * int(length)
         full_oid = f"{oid}{priornum}"
 
-        await snmp_set(full_oid, x)
+        await snmp_set(full_oid, OctetString(x))
 
 
 async def reading_category_sync(equipment_data: Dict[str, list], priornum) -> Dict[str, Any]:

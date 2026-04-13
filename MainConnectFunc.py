@@ -3,6 +3,9 @@ import json
 import subprocess
 import time
 import paramiko
+import re
+import sys
+
 from pysnmp.hlapi.asyncio import (bulk_cmd, SnmpEngine, UsmUserData, UdpTransportTarget, ContextData, ObjectType,
                                   get_cmd, set_cmd,
                                   ObjectIdentity, OctetString)
@@ -222,6 +225,74 @@ def get_full_ssh_output(command) -> str:
 
     finally:
         ssh.close()
+
+
+def ssh_exec_commands(commands: list, timeout_seconds: int = 900):
+    transport = None
+    try:
+        transport = paramiko.Transport((oidsSNMP()['ipaddr'], 22))
+        transport.set_keepalive(30)
+        transport.start_client(timeout=15)
+
+        def handler(title, instructions, prompt_list):
+            return [oidsSNMP()['pass']] * len(prompt_list)
+
+        transport.auth_interactive("admin", handler)
+
+        channel = transport.open_session()
+        channel.get_pty()
+        channel.invoke_shell()
+
+        time.sleep(2)
+        if channel.recv_ready():
+            channel.recv(9999)
+
+        channel.send("\n")
+        time.sleep(0.5)
+        hostname = "osmk"
+        if channel.recv_ready():
+            raw_data = channel.recv(4096).decode('utf-8', errors='ignore')
+            match = re.search(r'([\w\.\-]+)#', raw_data)
+            if match:
+                hostname = match.group(1)
+
+        prompt_pattern = rf"(?m)^{re.escape(hostname)}(\([\w\-]+\))?#\s*$"
+
+        for cmd in commands:
+            clean_cmd = cmd.strip()
+            channel.send(f"{clean_cmd}\n")
+
+            cmd_output = ""
+            start_time = time.time()
+
+            while True:
+                if channel.recv_ready():
+                    chunk = channel.recv(4096).decode('utf-8', errors='ignore')
+                    if chunk.strip() == clean_cmd:
+                        cmd_output += chunk
+                        continue
+                    yield chunk
+                    cmd_output += chunk
+                    if "Are you sure?" in chunk or "update the system image?" in chunk:
+                        channel.send("y\n")
+                        yield "y\n"
+                        start_time = time.time()
+                        continue
+                    if re.search(prompt_pattern, cmd_output):
+                        break
+                if time.time() - start_time > timeout_seconds:
+                    if hostname + "#" in cmd_output:
+                        break
+                    yield f"\n[TIMEOUT: {clean_cmd}]\n"
+                    break
+
+                time.sleep(0.1)
+
+    except Exception as e:
+        yield f"\n[SSH ERROR]: {str(e)}\n"
+    finally:
+        if transport:
+            transport.close()
 
 
 # ====================== ПРОЧЕЕ ======================

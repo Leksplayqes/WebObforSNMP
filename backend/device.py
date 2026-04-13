@@ -1,20 +1,26 @@
 """Endpoints related to device metadata and SNMP proxy initialisation."""
 from __future__ import annotations
-
 import threading
 from typing import Any, Dict
-
+import sys
 from fastapi import APIRouter, Depends
 
-from MainConnectFunc import equpimentV7, get_device_info
+from MainConnectFunc import equpimentV7, get_device_info, oidsSNMP
 from unit_tests.SnmpV7alarm import setSFP_Mode, alarmplusmaslcnctSTM, alarmplusmask
 
 from .config import ensure_config, json_input, json_set
 from .logs import add_log
-from backend.services.models import DeviceInfoRequest, ViaviSettings, ViaviUnitSettings
+from backend.services.models import DeviceInfoRequest, ViaviSettings, ViaviUnitSettings, UpgradeRequestImg, \
+    UpgradeRequestBlock
 from .services.tunnels import TunnelManagerError, TunnelService, get_tunnel_service
+from device_upgrade.slot_update import *
 
 router = APIRouter(tags=["device"])
+
+upgrade_state = {
+    "log": "",
+    "is_running": False
+}
 
 
 def _save_viavi_unit(unit_name: str, unit: ViaviUnitSettings | None) -> None:
@@ -36,6 +42,53 @@ def _save_viavi_unit(unit_name: str, unit: ViaviUnitSettings | None) -> None:
 def _save_viavi_settings(settings: ViaviSettings) -> None:
     _save_viavi_unit("NumOne", settings.NumOne)
     _save_viavi_unit("NumTwo", settings.NumTwo)
+
+
+def _update_img_by_type():
+    dev = oidsSNMP()["name"]
+    if dev == "OSM-KMv3":
+        pass
+    elif dev == "OSM-Kv7":
+        pass
+
+
+def _update_block_fpga(request_data):
+    global upgrade_state
+
+    data_dict = request_data.model_dump()
+    commands = block_update_by_dev(data_dict.get("block_type"), data_dict.get("slots"))
+    try:
+        for chunk in ssh_exec_commands(commands):
+            upgrade_state["log"] += chunk
+
+            sys.stdout.write(chunk)
+            sys.stdout.flush()
+
+    except Exception as e:
+        upgrade_state["log"] += f"\n[SSH ERROR]: {str(e)}\n"
+    finally:
+        upgrade_state["is_running"] = False
+
+
+def _run_img_upgrade_logic(request_data):
+    global upgrade_state
+    data = request_data.model_dump()
+    image_type = data.get("image")
+
+    command = image_update_by_dev(image_type)
+
+    upgrade_state["is_running"] = True
+    upgrade_state["log"] = f"🚀 Запуск обновления образа ({image_type})...\n"
+
+    try:
+        for chunk in ssh_exec_commands([command], timeout_seconds=1800):
+            upgrade_state["log"] += chunk
+            sys.stdout.write(chunk)
+            sys.stdout.flush()
+    except Exception as e:
+        upgrade_state["log"] += f"\n[ERROR]: {str(e)}\n"
+    finally:
+        upgrade_state["is_running"] = False
 
 
 @router.post("/device/info")
@@ -119,6 +172,34 @@ async def device_info(
         "viavi": (data or {}).get("VIAVIcontrol", {}).get("settings", {}),
         "loopback": current.get("loopback", {}),
     }
+
+
+@router.post("/firmware/upgrade/img")
+async def upgrade_firmware_img(request_data: UpgradeRequestImg):
+    # Запускаем в фоне
+    threading.Thread(target=_run_img_upgrade_logic, args=(request_data,), daemon=True).start()
+    return {"status": "success"}
+
+
+@router.get("/firmware/upgrade/log")
+async def get_upgrade_log():
+    # Возвращаем словарь с обязательным полем "status"
+    return {
+        "status": "success",
+        "log": upgrade_state["log"],
+        "is_running": upgrade_state["is_running"]}
+
+
+@router.post("/firmware/upgrade/block")
+async def upgrade_firmware_block(request_data: UpgradeRequestBlock):
+    def _run_upgrade():
+        upgrade_state["is_running"] = True
+        upgrade_state["log"] = "Начало процесса прошивки...\n"
+        _update_block_fpga(request_data)
+        upgrade_state["is_running"] = False
+
+    threading.Thread(target=_run_upgrade, daemon=True).start()
+    return {"status": "success"}
 
 
 @router.post("/device/unmask", summary="Размаскирование аварий")

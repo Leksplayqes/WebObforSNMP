@@ -59,19 +59,17 @@ def ssh_exec(ip: str, username: str, password: str, command: str, timeout: int =
     return output
 
 
-def ssh_reload(ip: str, password: str) -> None:
+def ssh_reload() -> None:
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(ip, port=22, username="admin", password=password)
-    try:
-        shell = ssh.invoke_shell()
-        shell.send("reload\n")
-        time.sleep(0.5)
-        shell.send("y\n")
-        time.sleep(0.5)
-    finally:
-        ssh.close()
-
+    ssh.connect(ip, port=22, username="admin", password=password, timeout=10)
+    chan = ssh.invoke_shell()
+    time.sleep(1)
+    chan.send("reload\n")
+    time.sleep(1)
+    chan.send("y\n")
+    time.sleep(0.5)
+    ssh.close()
 
 def scp_copy_remote_dir(ip: str, username: str, password: str, remote_path: str, local_dir: str) -> str:
     os.makedirs(local_dir, exist_ok=True)
@@ -127,27 +125,27 @@ def check_conf(
             config = ssh_exec(ip, "admin", password, "show running-config")
             iter_result["steps"].append({"get_config": config})
             # 2. SNMP check STM slots
-            # no_alarms, no_blocking = snmp_check_sfp_status_for_stm_slots()
-            # iter_result["steps"].append(
-            #     {
-            #         "sfp_check": {
-            #             "no_alarms": no_alarms,
-            #             "no_blocking": no_blocking,
-            #         }
-            #     }
-            # )
-            # if not (no_alarms and no_blocking):
-            #     iter_result["status"] = "alarm_detected"
-            #     summary["results"].append(iter_result)
-            #     if progress_cb:
-            #         progress_cb(i, iterations, iter_result, summary)
-            #     continue
+            no_alarms, no_blocking = snmp_check_sfp_status_for_stm_slots()
+            iter_result["steps"].append(
+                {
+                    "sfp_check": {
+                        "no_alarms": no_alarms,
+                        "no_blocking": no_blocking,
+                    }
+                }
+            )
+            if not (no_alarms and no_blocking):
+                iter_result["status"] = "alarm_detected"
+                summary["results"].append(iter_result)
+                if progress_cb:
+                    progress_cb(i, iterations, iter_result, summary)
+                continue
 
-            # 3. copy configs and logs
+            #3. copy configs and logs
 
-            # cfg_dir = scp_copy_remote_dir(ip, "root", "", "/var/volatile/tmp/smd/config", LOCAL_BASE_PATH)
-            # log_dir = scp_copy_remote_dir(ip, "root", "", "/var/volatile/log", LOCAL_BASE_PATH)
-            # iter_result["steps"].append({"copy": {"config": cfg_dir, "log": log_dir}})
+            cfg_dir = scp_copy_remote_dir(ip, "root", "", "/var/volatile/tmp/smd/config", LOCAL_BASE_PATH)
+            log_dir = scp_copy_remote_dir(ip, "root", "", "/var/volatile/log", LOCAL_BASE_PATH)
+            iter_result["steps"].append({"copy": {"config": cfg_dir, "log": log_dir}})
 
             # 4. reload if config unchanged
             if original_conf == config:

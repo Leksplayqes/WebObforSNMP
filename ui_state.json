@@ -2,34 +2,34 @@
   "api_base_url": "http://192.168.72.55:8000",
   "device_info": {
     "name": "OSM-KMv3",
-    "ipaddr": "192.168.72.70",
+    "ipaddr": "192.168.111.66",
     "slots_dict": {
-      "3": "STM-64M",
-      "4": "STM-64M",
-      "5": "Eth1000M",
-      "6": "63E1M",
-      "7": "STM-1/4",
-      "8": "Eth100M",
+      "3": "STM-1/4",
+      "4": "63E1M",
+      "5": "STM-16M",
+      "6": "STM-64M",
       "9": "KC-M12",
       "10": "KC-M12",
-      "12": "STM-16M",
-      "13": "STM-16M"
+      "11": "STM-64M",
+      "12": "STM-64M",
+      "13": "STM-64M",
+      "14": "STM-64M"
     },
     "viavi": {
       "NumOne": {
         "ipaddr": "192.168.72.231",
         "port": 8006,
         "typeofport": {
-          "Port1": "STM-16",
+          "Port1": "STM-4",
           "Port2": "STM-16"
         }
       },
       "NumTwo": {
-        "ipaddr": "",
+        "ipaddr": "192.168.72.230",
         "port": 8006,
         "typeofport": {
-          "Port1": "",
-          "Port2": ""
+          "Port1": "STM-16",
+          "Port2": "STM-16"
         }
       }
     },
@@ -38,55 +38,58 @@
       "port": 1
     }
   },
-  "ip_address_input": "192.168.72.70",
-  "password_input": "Qaz11111!",
+  "ip_address_input": "192.168.111.66",
+  "password_input": "Osmkm_66_",
   "snmp_type_select": "SnmpV3",
   "test_type_radio": "sync",
   "viavi_config": {
     "NumOne": {
       "ipaddr": "192.168.72.231",
       "typeofport": {
-        "Port1": "STM-16",
+        "Port1": "STM-4",
         "Port2": "STM-16"
       }
     },
     "NumTwo": {
-      "ipaddr": "",
+      "ipaddr": "192.168.72.230",
       "typeofport": {
-        "Port1": "",
-        "Port2": ""
+        "Port1": "STM-16",
+        "Port2": "STM-16"
       }
     }
   },
-  "wiring": [
-    {
-      "viavi_device": "NumOne",
-      "viavi_port": "Port2",
-      "viavi_interface": "STM-16",
-      "dev_slot": "12",
-      "dev_port": "1",
-      "dev_interface": "STM-16M",
-      "cable_id": ""
-    }
-  ],
-  "slot_loopback": 12,
-  "port_loopback": 2,
+  "wiring": [],
+  "slot_loopback": 11,
+  "port_loopback": 1,
   "selected_tests": [
-    "unit_tests/test_syncV7v2.py::test_STM_E1_create_del"
+    "unit_tests/test_syncV7v2.py::test_STM_QL_extport",
+    "unit_tests/test_syncV7v2.py::test_ThresQL_AlarmBlock",
+    "unit_tests/test_syncV7v2.py::test_QLSTM_set",
+    "unit_tests/test_syncV7v2.py::test_prior_statusSTM"
   ],
   "selected_test_labels": [
-    "Создание/удаление приоритетов (STM/E1)"
+    "Соответствие QL extPort ↔ STM",
+    "Аварии по порогам QL (блоки)",
+    "Передача QL через STM",
+    "Статус приоритета (STM)"
   ],
   "selected_tests_by_type": {
     "alarm": [],
     "sync": [
-      "unit_tests/test_syncV7v2.py::test_STM_E1_create_del"
+      "unit_tests/test_syncV7v2.py::test_STM_QL_extport",
+      "unit_tests/test_syncV7v2.py::test_ThresQL_AlarmBlock",
+      "unit_tests/test_syncV7v2.py::test_QLSTM_set",
+      "unit_tests/test_syncV7v2.py::test_prior_statusSTM"
     ],
     "stat": [],
-    "comm": []
+    "comm": [
+      "OsmCommutations/test_commutations.py::test_commutationsVC4"
+    ],
+    "other": []
   },
   "active_slots": {
-    "4": "STM-64M"
+    "4": "63E1M",
+    "12": "STM-64M"
   },
-  "current_job_id": "10-03-2026 13-25 - sync tests"
+  "current_job_id": "30-03-2026 16-16 - sync tests"
 }

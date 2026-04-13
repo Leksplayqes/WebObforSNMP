@@ -123,7 +123,7 @@ async def check_alarmPH(slot, portnum):
 
 async def setSFP_Mode():
     for slot in oidsSNMP()["slots_dict"]:
-        if 'STM' in oidsSNMP()["slots_dict"][slot]:
+        if 'STM' in oidsSNMP()["slots_dict"][slot] or oidsSNMP()["slots_dict"][slot] in ["Eth1000", "Eth1000M"]:
             allSetsMode = (
                 [(oids()["sfpSettings"]["sfpMODE"][oidsSNMP()['slots_dict'][slot]] + slot + f'.{port}', Integer(2))
                  for port in range(1, oids()["blockOID"]['quantPort'][oidsSNMP()['slots_dict'][slot]] + 1)])
@@ -139,14 +139,13 @@ async def setSFP_Mode():
 async def check_alarmSFP():
     ttlList = []
     for slot in oidsSNMP()["slots_dict"]:
-        if 'STM' in oidsSNMP()["slots_dict"][slot]:
+        if 'STM' in oidsSNMP()["slots_dict"][slot] or oidsSNMP()["slots_dict"][slot] in ["Eth1000", "Eth1000M"]:
             allGetAlarm = (
                 [(oids()["sfpSettings"]["sfpAlarm"][oidsSNMP()['slots_dict'][slot]] + slot + f'.{port}')
                  for port in range(1, oids()["blockOID"]['quantPort'][oidsSNMP()['slots_dict'][slot]] + 1)])
             ttlList.append(await multi_snmp_get(allGetAlarm))
     return sum(ttlList, [])
 
-print(asyncio.run(check_alarmSFP()))
 
 async def check_lockSFP():
     ttlList = []
@@ -157,7 +156,7 @@ async def check_lockSFP():
                  for port in range(1, oids()["blockOID"]['quantPort'][oidsSNMP()['slots_dict'][slot]] + 1)])
             ttlList.append(await multi_snmp_get(allGetAlarm))
     return sum(ttlList, [])
-print(asyncio.run(check_lockSFP()))
+
 
 async def check_alarm_cnct(slot, portnum, vc):
     alarm = await snmp_get(
@@ -254,7 +253,8 @@ async def create_commutationE1(slot, vc12, STMslot, STMport):
             f"{oids()['switch']['data_directionVC12'][oidsSNMP()['slots_dict'][slot]] + slot + '.1.1.' + f'{klm_numbersE1(vc12)}'}"))
 
 
-async def delete_commutation(oid):
+async def delete_commutation():
+    oid = OIDS["switch"]["del_comm"]
     await snmp_set(oid, Integer(1))
 
 

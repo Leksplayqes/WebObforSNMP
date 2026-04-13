@@ -13,7 +13,7 @@ from threading import RLock
 from typing import Dict, Iterable, List, Optional
 from fastapi import BackgroundTasks, HTTPException
 import streamlit as st
-from shared.catalogs import ALARM_TESTS_CATALOG, SYNC_TESTS_CATALOG, STAT_TEST_CATALOG, COMM_TEST_CATALOG
+from shared.catalogs import ALARM_TESTS_CATALOG, SYNC_TESTS_CATALOG, STAT_TEST_CATALOG, COMM_TEST_CATALOG, OTHER_TEST_CATALOG
 from ..config import PROJECT_ROOT, REPORT_DIR, ensure_config
 from ..jobs import job_path, load_jobs_on_startup, save_job
 from backend.services.models import TestsRunRequest
@@ -51,7 +51,7 @@ class TestExecutionService:
     # ------------------------------------------------------------------
     def list_catalogs(self) -> Dict[str, Dict[str, str]]:
         return {"alarm_tests": ALARM_TESTS_CATALOG, "sync_tests": SYNC_TESTS_CATALOG, "stat_tests": STAT_TEST_CATALOG,
-                "comm_tests": COMM_TEST_CATALOG}
+                "comm_tests": COMM_TEST_CATALOG, "other_tests": OTHER_TEST_CATALOG}
 
     def list_jobs(self) -> List[Dict[str, object]]:
         return [record.to_dict() for record in self._results.list()]

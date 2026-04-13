@@ -57,4 +57,26 @@ COMM_TEST_CATALOG = {"Коммутация VC4": "OsmCommutations/test_commutati
                      "Коммутация VC12": "OsmCommutations/test_commutations.py::test_commutationsVC12",
                      "Коммутация Е1": "OsmCommutations/test_commutations.py::test_commutationsE1"}
 
-__all__ = ["SYNC_TESTS_CATALOG", "ALARM_TESTS_CATALOG", "STAT_TEST_CATALOG", "COMM_TEST_CATALOG"]
+OTHER_TEST_CATALOG = {"Запись BlockCategory": "OsmCategory/test_OSMK_category.py::test_set_block_category",
+                      "Сохранение BlockCategory": "OsmCategory/test_OSMK_category.py::test_check_block_category",
+
+                      "Запись SubrackCategory": "OsmCategory/test_OSMK_category.py::test_set_equipment_category",
+                      "Сохранение SubrackCategory": "OsmCategory/test_OSMK_category.py::test_check_equipment_category",
+
+                      "Запись SyncCategory": "OsmCategory/test_OSMK_category.py::test_set_sync_category",
+                      "Сохранение SyncCategory": "OsmCategory/test_OSMK_category.py::test_check_sync_category",
+
+                      "Запись BlockLabel": "OsmCategory/test_OSMK_category.py::test_set_label",
+                      "Сохранение BlockLabel": "OsmCategory/test_OSMK_category.py::test_check_label",
+
+                      "Запись AllMask": "OsmCategory/test_OSMK_category.py::test_set_mask",
+                      "Сохранение AllMask": "OsmCategory/test_OSMK_category.py::test_check_mask",
+
+                      "Запись BlockLoop": "OsmCategory/test_OSMK_category.py::test_set_loop",
+                      "Сохранение BlockLoop": "OsmCategory/test_OSMK_category.py::test_check_loop",
+
+                      "Запись TraceXX": "OsmCategory/test_OSMK_category.py::test_set_trace",
+                      "Сохранение TraceXX": "OsmCategory/test_OSMK_category.py::test_check_trace",
+                      }
+
+__all__ = ["SYNC_TESTS_CATALOG", "ALARM_TESTS_CATALOG", "STAT_TEST_CATALOG", "COMM_TEST_CATALOG", "OTHER_TEST_CATALOG"]

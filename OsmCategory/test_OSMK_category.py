@@ -17,7 +17,8 @@ def device_reload():
 # ----------------------------
 # TESTS: Category blocks
 # ----------------------------
-@pytest.mark.parametrize("slot, block", oidsSNMP()["slots_dict"].items())
+@pytest.mark.parametrize("slot, block",
+                         [(s, b) for s, b in oidsSNMP()["slots_dict"].items() if s in EQ["active_slots"]])
 def test_set_block_category(slot, block):
     block_data = CATEGORY_BLOCKS_DB[block]
     asyncio.run(process_category_block(SLOTS_DICT, block, block_data))
@@ -46,19 +47,14 @@ def test_check_block_category(device_reload, slot, block):
 def test_set_equipment_category():
     if not EQUIPMENT_DATA:
         pytest.skip("No equipment OIDs in Category")
-
     asyncio.run(process_category_equipment(EQUIPMENT_DATA))
     result = asyncio.run(reading_category_equipment(EQUIPMENT_DATA))
-
+    print(result)
     for key, raw in result.items():
         val = bytes_from_snmp_value(raw)
         assert not any(d in val for d in [b"\x00", b"\x01", b"\x02", b"\x03", b"\x05"]), f"{key}={val!r}"
-    conf = asyncio.run(config_category_equipment())
-    for key, value in conf.items():
-        if isinstance(value, int):
-            assert value == 4, f"Oшибка в {key}"
-        else:
-            assert set(str(value).replace(' ', '')) == {'4'}, f"Oшибка в {key}"
+    status = asyncio.run(config_category_equipment())
+    assert status is True, f"Обнаружены ошибки в конфигурационном файле: {status}"
 
 
 def test_check_equipment_category(device_reload):
@@ -70,12 +66,8 @@ def test_check_equipment_category(device_reload):
     for key, raw in new_result.items():
         val = bytes_from_snmp_value(raw)
         assert not any(d in val for d in [b"\x00", b"\x01", b"\x02", b"\x03", b"\x05"]), f"{key}={val!r}"
-    conf = asyncio.run(config_category_equipment())
-    for key, value in conf.items():
-        if isinstance(value, int):
-            assert value == 4, f"Oшибка в {key}"
-        else:
-            assert set(str(value).replace(' ', '')) == {'4'}, f"Oшибка в {key}"
+    status = asyncio.run(config_category_equipment())
+    assert status is True, f"Обнаружены ошибки в конфигурационном файле: {status}"
 
 
 # ----------------------------
@@ -85,7 +77,6 @@ def test_check_equipment_category(device_reload):
 def test_set_sync_category(priornum):
     if not SYNC_DATA:
         pytest.skip("No equipment OIDs in Category")
-
     asyncio.run(process_category_sync(SYNC_DATA, priornum))
     result = asyncio.run(reading_category_sync(SYNC_DATA, priornum))
 
@@ -93,10 +84,8 @@ def test_set_sync_category(priornum):
         val = bytes_from_snmp_value(raw)
         assert b"\x04" in val, f"Ожидалась 4 в {key}, получено {val!r}"
 
-    conf = asyncio.run(config_category_sync())
-    for key, value in conf.items():
-        clean = str(value).replace(' ', '')
-        assert clean and set(clean) == {'4'}, f"Ошибка в {key}: {value}"
+    status = asyncio.run(config_category_sync())
+    assert status is True, f"Обнаружены ошибки в конфигурационном файле: {status}"
 
 
 @pytest.mark.parametrize("priornum", range(1, 9))
@@ -110,12 +99,8 @@ def test_check_sync_category(device_reload, priornum):
         val = bytes_from_snmp_value(raw)
         assert not any(d in val for d in [b"\x00", b"\x01", b"\x02", b"\x03", b"\x05"]), f"{key}={val!r}"
 
-    conf = asyncio.run(config_category_sync())
-    for key, value in conf.items():
-        if isinstance(value, int):
-            assert value == 4, f"Oшибка в {key}"
-        else:
-            assert set(str(value).replace(' ', '')) == {'4'}, f"Oшибка в {key}"
+    status = asyncio.run(config_category_sync())
+    assert status is True, f"Обнаружены ошибки в конфигурационном файле: {status}"
 
 
 # ----------------------------

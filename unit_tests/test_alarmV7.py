@@ -29,13 +29,15 @@ def E1_loopback():
 @pytest.mark.parametrize("slot, portnum, alarmname",
                          [(int(w["dev_slot"]), int(w["dev_port"]), alarmname)
                           for w in OIDS_VIAVI["wiring"]
-                          if "STM" in w["dev_interface"]
+                          if "STM" in w["dev_interface"] and w["dev_slot"] in OIDS_SNMP["active_slots"]
                           for alarmname in OIDS["main_alarm"]["alarm_viavi"]
                           if str(asyncio.run(check_alarmPH(int(w["dev_slot"]), int(w["dev_port"])))) not in ["1", "2"]])
 def test_physical_alarmSTM(slot, portnum, alarmname):
     clear_trap_log()
     non_burst_alarms = {"SD", "EXC", "TIM"}
-
+    for i in OIDS_VIAVI["wiring"]:
+        if i["dev_slot"] == slot and i["dev_port"] == portnum:
+            VIAVI_secndStage("vc-4", device_name=i["viavi_device"], port_name=i["viavi_port"])
     if alarmname not in non_burst_alarms:
         _handle_standard_alarm(slot, portnum, alarmname)
     elif alarmname == "TIM":
@@ -103,7 +105,7 @@ def _handle_burst_alarm(slot, portnum, alarmname):
     for i in OIDS_VIAVI["wiring"]:
         if i["dev_slot"] == slot and i["dev_port"] == portnum:
             time.sleep(1)
-            rate_val = "1E5" if alarmname == "SD" else "1E3"
+            rate_val = "1E5" if alarmname == "SD" else "1E4"
             try:
                 VIAVI_set_command(i["viavi_interface"], ":SOURCE:SDH:MS:BIP:TYPE", "RATE", "vc-4", i["viavi_device"],
                                   i["viavi_port"])
@@ -131,19 +133,19 @@ def _handle_burst_alarm(slot, portnum, alarmname):
   Далее с Viavi запускается авария, регистрируется по SNMP и **регистрам**.'''
 
 
-@pytest.mark.parametrize("slot, portnum, alarmname, vc",
-                         [(int(w["dev_slot"]), int(w["dev_port"]), alarmname, vc)
-                          for w in OIDS_VIAVI["wiring"]
-                          if "STM" in w["dev_interface"]
-                          for alarmname in OIDS["main_alarm"]["alarm_viavi_cnct"]
-                          if str(asyncio.run(check_alarmPH(int(w["dev_slot"]), int(w["dev_port"])))) not in ["1", "2"]
-                          for vc in
-                          range(1, OIDS["blockOID"]["quantCnctPort"][oidsSNMP()["slots_dict"][w["dev_slot"]]] + 1)])
+@pytest.mark.parametrize("slot, portnum, alarmname, vc", [
+    (int(w["dev_slot"]), int(w["dev_port"]), alarmname, vc)
+    for w in OIDS_VIAVI["wiring"]
+    if "STM" in w["dev_interface"] and w["dev_slot"] in OIDS_SNMP["active_slots"]
+    for alarmname in OIDS["main_alarm"]["alarm_viavi_cnct"]
+    for vc in range(1, OIDS["blockOID"]["quantCnctPort"][oidsSNMP()["slots_dict"][str(w["dev_slot"])]] + 1)
+])
 def test_connective_alarmSTM(slot, portnum, alarmname, vc):
     slot, portnum = str(slot), str(portnum)
     for i in OIDS_VIAVI["wiring"]:
         if i["dev_slot"] == slot and i["dev_port"] == portnum:
-            asyncio.run(delete_commutation("1.3.6.1.4.1.5756.3.3.1.2.5.2.0"))
+            VIAVI_secndStage("vc-4", device_name=i["viavi_device"], port_name=i["viavi_port"])
+            asyncio.run(delete_commutation())
             asyncio.run(create_commutationVC4(slot, portnum, vc))
 
             VIAVI_set_command(i['viavi_interface'], ":SENSE:SDH:CHANNEL:STMN ", str(vc), "vc-4",
@@ -200,11 +202,13 @@ def _test_vcais_alarm(slot, portnum, vc):
     for i in OIDS_VIAVI["wiring"]:
         if i["dev_slot"] == slot and i["dev_port"] == portnum:
             try:
-                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "255", "vc-4",
+                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "255",
+                                  "vc-4",
                                   i["viavi_device"],
                                   i["viavi_port"])
                 time.sleep(3)
-                assert asyncio.run(check_alarm_cnct(slot, portnum, vc)) == OIDS["main_alarm"]["alarm_mib_valueCnct"][alarmname]
+                assert asyncio.run(check_alarm_cnct(slot, portnum, vc)) == OIDS["main_alarm"]["alarm_mib_valueCnct"][
+                    alarmname]
                 alarm_oid = f'{OIDS["main_alarm"]["alarm_status"]["connective"][block]}{slot}.{portnum}.{vc}'
                 assert bd_alarm_get(alarmname, alarm_oid)
                 assert (alarm_oid, str(OIDS["main_alarm"]["alarm_mib_valueCnct"][alarmname])) == parse_snmp_log(
@@ -212,7 +216,8 @@ def _test_vcais_alarm(slot, portnum, vc):
             except Exception:
                 raise AssertionError("Тест аварии VCAIS не прошел")
             finally:
-                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "254", "vc-4",
+                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "254",
+                                  "vc-4",
                                   i["viavi_device"],
                                   i["viavi_port"])
 
@@ -224,7 +229,8 @@ def _test_aupje_alarm(slot, portnum, vc):
     for i in OIDS_VIAVI["wiring"]:
         if i["dev_slot"] == slot and i["dev_port"] == portnum:
             try:
-                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "INTERNAL", "vc-4",
+                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "INTERNAL",
+                                  "vc-4",
                                   i["viavi_device"],
                                   i["viavi_port"])
                 VIAVI_set_command(i["viavi_interface"], ":OUTPUT:CLOCK:OFFSET ", "50",
@@ -242,7 +248,8 @@ def _test_aupje_alarm(slot, portnum, vc):
             except Exception:
                 raise AssertionError("Тест аварии AUPJE не прошел")
             finally:
-                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "RECOVERED", "vc-4",
+                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "RECOVERED",
+                                  "vc-4",
                                   i["viavi_device"],
                                   i["viavi_port"])
 
@@ -255,7 +262,8 @@ def _test_vcplm_alarm(slot, portnum, vc):
     for i in OIDS_VIAVI["wiring"]:
         if i["dev_slot"] == slot and i["dev_port"] == portnum:
             try:
-                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "012", "vc-4",
+                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "012",
+                                  "vc-4",
                                   i["viavi_device"],
                                   i["viavi_port"])
                 time.sleep(4)
@@ -269,7 +277,8 @@ def _test_vcplm_alarm(slot, portnum, vc):
             except Exception:
                 raise AssertionError("Тест аварии VCPLM не прошел")
             finally:
-                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "254", "vc-4",
+                VIAVI_set_command(i["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnct"][alarmname], "254",
+                                  "vc-4",
                                   i["viavi_device"],
                                   i["viavi_port"])
 
@@ -288,99 +297,90 @@ def _test_vcplm_alarm(slot, portnum, vc):
 
 @pytest.mark.parametrize('slot, alarmname, vc', [
     (slot, alarmname, vc)
-    for slot in [slot for slot in oidsSNMP()["slots_dict"] if "E1" in oidsSNMP()["slots_dict"][slot]]
+    for slot, module in oidsSNMP()["slots_dict"].items()
+    if "E1" in module and slot in OIDS_SNMP["active_slots"]
     for alarmname in OIDS["main_alarm"]["alarm_viavi_cnctE1"]
-    for vc in range(1, OIDS["blockOID"]["quantPort"][oidsSNMP()["slots_dict"][slot]] + 1)
+    for vc in range(1, OIDS["blockOID"]["quantPort"][module] + 1)
 ])
 def test_connective_alarmE1(E1_VIAVI_test, slot, alarmname, vc):
-    asyncio.run(delete_commutation("1.3.6.1.4.1.5756.3.3.1.2.5.2.0"))
-    asyncio.run(create_commutationE1(slot, vc))
+    wiring_block = OIDS_VIAVI["wiring"][0]
+    STMslot, STMport = wiring_block["dev_slot"], wiring_block["dev_port"]
+    VIAVI_secndStage("vc-12", device_name=wiring_block["viavi_device"], port_name=wiring_block["viavi_port"])
+    asyncio.run(delete_commutation())
+    asyncio.run(create_commutationE1(slot, vc, STMslot, STMport))
     time.sleep(10)
 
     if alarmname in ["TUAIS", "VCUNEQ", "VCRDI"]:
-        _test_standard_e1_alarm(slot, vc, alarmname)
+        _test_standard_e1_alarm(slot, vc, alarmname, wiring_block)
     elif alarmname in ["VCAIS", "VCPLM"]:
-        _test_vcaplm_e1_alarm(slot, vc, alarmname)
+        _test_vcaplm_e1_alarm(slot, vc, alarmname, wiring_block)
     elif alarmname == "TUPJE":
-        _test_tupje_e1_alarm(slot, vc)
+        _test_tupje_e1_alarm(slot, vc, wiring_block)
     elif alarmname == "VCTIM":
-        _test_vctim_e1_alarm(slot, vc)
+        _test_vctim_e1_alarm(slot, vc, wiring_block)
 
 
-def _test_standard_e1_alarm(slot, vc, alarmname):
-    viavi_port = oidsVIAVI()["settings"]["NumOne"]["typeofport"]["Port1"]
+def _test_standard_e1_alarm(slot, vc, alarmname, wiring_block):
     try:
-        VIAVI_set_command(viavi_port, OIDS["main_alarm"]["alarm_viavi_cnctE1"][alarmname], "ON")
+        VIAVI_set_command(wiring_block["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnctE1"][alarmname], "ON")
         time.sleep(2)
 
-        # Проверка через SSH
         ssh_value = get_ssh_value(slot, OIDS["main_alarm"]["cnct_reg_alarmE1"][oidsSNMP()["slots_dict"][slot]][str(vc)])
         parsed_value = value_parser_OSMK(ssh_value)
         assert parsed_value[OIDS["main_alarm"]["alarm_bit_cnctE1"][alarmname]] == "1"
 
-        # Проверка через SNMP
         assert asyncio.run(check_alarm_cnctE1(slot, vc)) == OIDS["main_alarm"]["alarm_mib_valueE1"][alarmname]
 
         time.sleep(2)
     except Exception:
         raise AssertionError(f"Тест аварии {alarmname} не прошел")
     finally:
-        VIAVI_set_command(viavi_port, OIDS["main_alarm"]["alarm_viavi_cnctE1"][alarmname], "OFF")
+        VIAVI_set_command(wiring_block["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnctE1"][alarmname], "OFF")
 
 
-def _test_vcaplm_e1_alarm(slot, vc, alarmname):
-    """Тест аварий VCAIS и VCPLM для E1"""
-    viavi_port = oidsVIAVI()["settings"]["NumOne"]["typeofport"]["Port1"]
+def _test_vcaplm_e1_alarm(slot, vc, alarmname, wiring_block):
     set_value = "14" if alarmname == "VCAIS" else "10"
 
     try:
-        VIAVI_set_command(viavi_port, OIDS["main_alarm"]["alarm_viavi_cnctE1"][alarmname], set_value)
+        VIAVI_set_command(wiring_block["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnctE1"][alarmname], set_value)
         time.sleep(2)
 
-        # Проверка через SSH
         ssh_value = get_ssh_value(slot, OIDS["main_alarm"]["cnct_reg_alarmE1"][oidsSNMP()["slots_dict"][slot]][str(vc)])
         parsed_value = value_parser_OSMK(ssh_value)
         assert parsed_value[OIDS["main_alarm"]["alarm_bit_cnctE1"][alarmname]] == "1"
 
-        # Проверка через SNMP
         assert asyncio.run(check_alarm_cnctE1(slot, vc)) == OIDS["main_alarm"]["alarm_mib_valueE1"][alarmname]
 
     except Exception:
         raise AssertionError(f"Тест аварии {alarmname} не прошел")
     finally:
-        VIAVI_set_command(viavi_port, OIDS["main_alarm"]["alarm_viavi_cnctE1"][alarmname], "4")
+        VIAVI_set_command(wiring_block["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnctE1"][alarmname], "4")
 
 
-def _test_tupje_e1_alarm(slot, vc):
-    """Тест аварии TUPJE для E1"""
-    viavi_port = oidsVIAVI()["settings"]["NumOne"]["typeofport"]["Port1"]
-
+def _test_tupje_e1_alarm(slot, vc, wiring_block):
     try:
-        VIAVI_set_command(viavi_port, OIDS["main_alarm"]["alarm_viavi_cnctE1"]["TUPJE"], "INTERNAL")
+        VIAVI_set_command(wiring_block["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnctE1"]["TUPJE"], "INTERNAL")
         time.sleep(2)
 
-        # Проверка через SSH
         ssh_value = get_ssh_value(slot, OIDS["main_alarm"]["cnct_reg_alarmE1"][oidsSNMP()["slots_dict"][slot]][str(vc)])
         parsed_value = value_parser_OSMK(ssh_value)
         assert parsed_value[OIDS["main_alarm"]["alarm_bit_cnctE1"]["TUPJE"]] == "1"
 
-        # Проверка через SNMP
         assert asyncio.run(check_alarm_cnctE1(slot, vc)) == OIDS["main_alarm"]["alarm_mib_valueE1"]["TUPJE"]
 
     except Exception:
         raise AssertionError("Тест аварии TUPJE не прошел")
     finally:
-        VIAVI_set_command(viavi_port, OIDS["main_alarm"]["alarm_viavi_cnctE1"]["TUPJE"], "RECOVERED")
+        VIAVI_set_command(wiring_block["viavi_interface"], OIDS["main_alarm"]["alarm_viavi_cnctE1"]["TUPJE"], "RECOVERED")
 
 
-def _test_vctim_e1_alarm(slot, vc):
-    """Тест аварии VCTIM для E1"""
+def _test_vctim_e1_alarm(slot, vc, wiring_block):
     block = oidsSNMP()["slots_dict"][slot]
     try:
         TD = ''.join(random.choices('123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM', k=15))
         asyncio.run(change_traceTDE1(block, vc, "J2       "))
         for i in range(15):
-            VIAVI_set_command(oidsVIAVI()["settings"]["NumOne"]["typeofport"]["Port1"],
+            VIAVI_set_command(wiring_block["viavi_interface"],
                               f":SOURCE:SDH:LP:OVERHEAD:TRACE (@{i})", value=ord(TD[i]))
         time.sleep(1)
         assert asyncio.run(check_alarm_cnctE1(block, vc)) == OIDS["main_alarm"]["alarm_mib_valueE1"]["VCTIM"]
@@ -393,7 +393,7 @@ def _test_vctim_e1_alarm(slot, vc):
         TD = "J2       "
         asyncio.run(change_traceTDE1(block, vc, "J2       "))
         for i in range(15):
-            VIAVI_set_command(block, f":SOURCE:SDH:LP:OVERHEAD:TRACE (@{i})", value=ord(TD[i]))
+            VIAVI_set_command(wiring_block["viavi_interface"], f":SOURCE:SDH:LP:OVERHEAD:TRACE (@{i})", value=ord(TD[i]))
 
 
 ''' Тесть исключительно только для первого VC-4 в блоке Eth1000
@@ -409,7 +409,7 @@ TRAP не прикручены, как и проверка устранения 
                                                            for alarmname in OIDS["main_alarm"]["alarm_viavi_cnctGE"]
                                                            for vc in range(1, 2)])
 def test_connective_alarmGE(block, portnum, alarmname, vc):
-    asyncio.run(delete_commutation("1.3.6.1.4.1.5756.3.3.1.1.5.2.0"))
+    asyncio.run(delete_commutation())
     asyncio.run(create_commutationGE(block, vc))
     VIAVI_set_command(oidsVIAVI()["settings"]["NumOne"]["typeofport"]["Port1"], ":SOURCE:SDH:HP:C2:BYTE", 27)
     VIAVI_set_command(oidsVIAVI()["settings"]["NumOne"]["typeofport"]["Port1"], ":SOURCE:SDH:STMN:CHANNEL ", vc)

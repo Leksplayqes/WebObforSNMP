@@ -69,7 +69,7 @@ async def SETS_QL():
     return SETSQL
 
 
-async def STM1_ext_port(lgc, portnum, slot):
+async def STM1_ext_port(lgc,  slot, portnum):
     ext_port_set = await snmp_set(oids()["syncOID"]["extTable"]["extSourceID"] + str(lgc),
                                   ObjectIdentifier(
                                       oids()["blockOID"]["statusOID"][

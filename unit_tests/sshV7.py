@@ -1,5 +1,5 @@
 import time
-from MainConnectFunc import oidsSNMP
+from MainConnectFunc import oidsSNMP, oids
 import datetime
 import paramiko
 
@@ -14,6 +14,7 @@ def get_ssh_value(slot: str, reg: str) -> str:
     ssh.close()
     return result.strip()
 
+
 def ssh_reload():
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -21,7 +22,7 @@ def ssh_reload():
     max_retries = 2
     for attempt in range(max_retries):
         try:
-            # Пытаемся подключиться
+
             ssh.connect("192.168.125.46", port=22, username='admin', password='', timeout=15)
 
             # Если подключились успешно, выполняем команды
@@ -96,6 +97,7 @@ def bd_alarm_get(alarmname, oid):
     ssh.connect(host, port, username, password)
     try:
         escaped_insert_query = f"SELECT alarmname, soe_alias FROM public.hw_alarm WHERE timeend is NULL and soe_alias LIKE '%{oid}%' and alarmname LIKE '%{alarmname}%' ORDER by timebegin DESC LIMIT 10;"
+        # escaped_insert_query = f"SELECT * FROM public.hw_auditmodel DESC LIMIT 10;"
         insert_command = f"psql -U {db_user} -d {db_name} -c \"{escaped_insert_query}\""
         stdin, stdout, stderr = ssh.exec_command(insert_command)
         out = stdout.read().decode().strip().split('\n')
@@ -107,46 +109,57 @@ def bd_alarm_get(alarmname, oid):
         ssh.close()
 
 
-def insert_million_rows():
-    host = "192.168.120.88"
+
+''' ДЛЯ ПЕРЕСЕЧЕНИЯ ПОРОГА ВЫСТАВАЛЯТЬ SEQUENCE 
+su - postgres -c "psql -d hw_alarm"
+SELECT * FROM hw_auditmodel_id_seq;
+\d hw_auditmodel_id_seq                        --------> убедиться что cycle - yes.
+SELECT setval('hw_auditmodel_id_seq', 2147483647);
+'''
+
+
+def insert_clean():
+    host = "192.168.72.70"
     port = 22
     username = "root"
     password = ""
-
-    db_user = "postgres"
     db_name = "hw_alarm"
-
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(host, port, username, password)
 
     try:
-        # Размер пакета (количество строк за один запрос)
-        batch_size = 250
-        total_rows = 1000000000  # Общее количество строк для вставки
-        start_id = 100000  # Начальное значение id
+        ssh.connect(host, port, username, password)
 
-        while start_id <= total_rows:
+        batch_size = 5
+        count_to_insert = 500
+        start_id = 2147483600
+
+        current_id = start_id
+        while current_id < start_id + count_to_insert:
+            next_batch = min(current_id + batch_size, start_id + count_to_insert)
+
             values = ", ".join(
-                [f"({i}, '8.8.8.8', 'sadmin')" for i in range(start_id, start_id + batch_size)])
-            insert_query = f'''
-                INSERT INTO hw_auditmodel (id, address, "user") 
-                VALUES {values};
-            '''
-            # Экранирование SQL-запроса для передачи в shell
-            escaped_insert_query = insert_query.replace("'", "'\\''")
-            insert_command = f"psql -U {db_user} -d {db_name} -c '{escaped_insert_query}'"
+                [f"({i}, '8.8.8.8', 'sadmin')" for i in range(current_id, next_batch)]
+            )
+            sql_query = f"INSERT INTO public.hw_auditmodel (id, address, \"user\") VALUES {values};"
+            cmd = f'su - postgres -c "psql -d {db_name}" <<EOF\n{sql_query}\nEOF\n'
 
-            stdin, stdout, stderr = ssh.exec_command(insert_command)
-            errors = stderr.read().decode()
-            if errors:
-                print(f"Ошибка при вставке пакета {start_id}-{start_id + batch_size - 1}: {errors}")
-                break
+            stdin, stdout, stderr = ssh.exec_command(cmd)
+
+            out = stdout.read().decode()
+            err = stderr.read().decode()
+
+            if "INSERT" in out:
+                print(f"Успешно вставлен пакет: {current_id}-{next_batch - 1}")
             else:
-                print(f"Пакет {start_id}-{start_id + batch_size - 1} успешно вставлен.")
+                print(f"Ошибка на пакете {current_id}: {err}")
+                break
 
-            # Увеличение start_id для следующего пакета
-            start_id += batch_size
+            current_id = next_batch
+        print("\nПроверка итогового количества:")
+        _, stdout, _ = ssh.exec_command(
+            f"su - postgres -c \"psql -d {db_name} -t -c 'SELECT count(*) FROM public.hw_auditmodel WHERE id >= {start_id};'\"")
+        print(f"Записей в базе: {stdout.read().decode().strip()}")
 
     finally:
         ssh.close()

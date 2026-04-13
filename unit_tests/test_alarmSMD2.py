@@ -140,7 +140,7 @@ def _handle_burst_alarm(slot, portnum, alarmname):
         oidsSNMP["slots_dict"][slot]] + 1)])
 def test_connective_alarmSTM(slot, portnum, alarmname, vc):
     """Тест для проверки аварий связности STM"""
-    asyncio.run(delete_commutation("1.3.6.1.4.1.5756.3.3.1.1.5.2.0"))
+    asyncio.run(delete_commutation())
     asyncio.run(create_commutationVC4(slot, portnum, vc))
 
     block = oidsSNMP["slots_dict"][slot]
@@ -263,7 +263,7 @@ def _test_vcplm_alarm(slot, portnum, vc, viavi_slot):
 ])
 def test_connective_alarmE1(E1_VIAVI_test, slot, alarmname, vc):
     """Тест для проверки аварий VC12"""
-    asyncio.run(delete_commutation("1.3.6.1.4.1.5756.3.3.1.1.5.2.0"))
+    asyncio.run(delete_commutation())
     asyncio.run(create_commutationE1(slot, vc))
     time.sleep(1)
 
@@ -380,7 +380,7 @@ TRAP не прикручены, как и проверка устранения 
                                                            for alarmname in oids["main_alarm"]["alarm_viavi_cnctGE"]
                                                            for vc in range(1, 2)])
 def test_connective_alarmGE(block, portnum, alarmname, vc):
-    asyncio.run(delete_commutation("1.3.6.1.4.1.5756.3.3.1.1.5.2.0"))
+    asyncio.run(delete_commutation())
     asyncio.run(create_commutationGE(block, vc))
     VIAVI_set_command(oidsVIAVI["settings"]["NumOne"]["typeofport"]["Port1"], ":SOURCE:SDH:HP:C2:BYTE", 27)
     VIAVI_set_command(oidsVIAVI["settings"]["NumOne"]["typeofport"]["Port1"], ":SOURCE:SDH:STMN:CHANNEL ", vc)
