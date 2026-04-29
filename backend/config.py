@@ -12,7 +12,7 @@ REPORT_DIR.mkdir(parents=True, exist_ok=True)
 JOBS_DIR: Path = REPORT_DIR / "jobs"
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
-DEFAULT_TUNNEL_PORTS: List[int] = [1161, 21161, 31161]
+DEFAULT_TUNNEL_PORTS: List[int] = [0, 0, 0]
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "CurrentEQ": {"name": "", "ipaddr": "", "pass": "", "slots_dict": {}},
@@ -52,11 +52,11 @@ def _atomic_write(path: Path, data: Dict[str, Any]) -> None:
 def ensure_config() -> Dict[str, Any]:
     try:
         if not CONFIG_FILE.exists():
-            _atomic_write(CONFIG_FILE, DEFAULT_CONFIG)
+            # _atomic_write(CONFIG_FILE, DEFAULT_CONFIG)
             return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
         return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
     except Exception:
-        _atomic_write(CONFIG_FILE, DEFAULT_CONFIG)
+        # _atomic_write(CONFIG_FILE, DEFAULT_CONFIG)
         return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
 
 

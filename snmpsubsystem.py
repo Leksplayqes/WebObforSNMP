@@ -3,6 +3,8 @@ import asyncio
 import asyncssh
 import threading
 from typing import Tuple, Optional
+from MainConnectFunc import json_input
+
 # ---------- значения по умолчанию ----------
 DEFAULT_DEVICE_IP = ""
 DEFAULT_USERNAME = "admin"
@@ -10,6 +12,8 @@ DEFAULT_PASSWORD = ""
 DEFAULT_LISTEN_HOST = "127.0.0.1"
 DEFAULT_LISTEN_PORT = 1161
 DEFAULT_TIMEOUT = 2.0
+
+
 # ---------------------------------------------------------------
 class SnmpSshProxy(asyncio.DatagramProtocol):
     def __init__(
@@ -32,19 +36,24 @@ class SnmpSshProxy(asyncio.DatagramProtocol):
 
         self._inflight = asyncio.Lock()
         self._closed = asyncio.Event()
+
     # ---------------- UDP hooks ----------------
     def connection_made(self, transport):
         self.transport = transport
         sock = transport.get_extra_info("socket")
         addr = sock.getsockname() if sock else self.listen_addr
         print(f"[proxy] UDP listening on {addr[0]}:{addr[1]} (Ctrl+C/close to stop)")
+
     def error_received(self, exc):
         print(f"[proxy] UDP error: {exc!r}")
+
     def connection_lost(self, exc):
         print(f"[proxy] UDP closed")
         self.transport = None
+
     def datagram_received(self, data: bytes, addr):
         asyncio.create_task(self._handle_datagram(data, addr))
+
     # -------------- SSH helpers ----------------
     async def _close_ssh(self):
         try:
@@ -63,6 +72,7 @@ class SnmpSshProxy(asyncio.DatagramProtocol):
             pass
         self.conn = None
         self.proc = None
+
     def _proc_alive(self) -> bool:
         return bool(self.proc and self.proc.stdin and not self.proc.stdin.is_closing())
 
@@ -77,7 +87,7 @@ class SnmpSshProxy(asyncio.DatagramProtocol):
             username=self.username,
             password=self.password,
             known_hosts=None,
-            keepalive_interval=30,
+            keepalive_interval=5,
         )
         try:
             self.proc = await self.conn.create_process(subsystem="snmp", encoding=None)
@@ -86,6 +96,7 @@ class SnmpSshProxy(asyncio.DatagramProtocol):
             raise RuntimeError(f"Failed to open SSH subsystem 'snmp': {e}") from e
 
         print("[proxy] SSH 'snmp' subsystem is ready")
+
     # ---------------- Core ---------------------
     async def _handle_datagram(self, data: bytes, addr):
         async with self._inflight:
@@ -106,6 +117,7 @@ class SnmpSshProxy(asyncio.DatagramProtocol):
             except (asyncssh.Error, OSError, RuntimeError) as e:
                 print(f"[proxy] SSH/IO error: {e}")
                 await self._close_ssh()
+
     async def _read_reply_with_timeout(self, timeout: float) -> bytes:
         if not self.proc:
             return b""
@@ -121,24 +133,38 @@ class SnmpSshProxy(asyncio.DatagramProtocol):
                     more = await asyncio.wait_for(self.proc.stdout.read(65535), 0.01)
                 except asyncio.TimeoutError:
                     break
-                    break
                 buf.extend(more)
         except asyncio.TimeoutError:
             return b""
         return bytes(buf)
+
     # -------------- lifecycle ------------------
     async def start(self):
         if self.transport:
             return
         loop = asyncio.get_running_loop()
-        await loop.create_datagram_endpoint(lambda: self, local_addr=self.listen_addr)
+
+        self.transport, _ = await loop.create_datagram_endpoint(
+            lambda: self,
+            local_addr=self.listen_addr
+        )
+
+        sock = self.transport.get_extra_info("socket")
+        ip, port = sock.getsockname()
+        await json_input(["CurrentEQ", "snmp_port"], port)
+        if sock:
+            self.listen_addr = sock.getsockname()
+
         self._closed.clear()
+
     async def stop(self):
         if self.transport:
             self.transport.close()
             self.transport = None
         await self._close_ssh()
         self._closed.set()
+
+
 # ================= Controller (start/close) =================
 class ProxyController:
     def __init__(self):
@@ -146,6 +172,7 @@ class ProxyController:
         self.thread: Optional[threading.Thread] = None
         self.proxy: Optional[SnmpSshProxy] = None
         self._lock = threading.RLock()
+
     def _ensure_loop(self):
         with self._lock:
             if self.loop and self.loop.is_running():
@@ -158,9 +185,11 @@ class ProxyController:
 
             self.thread = threading.Thread(target=_runner, daemon=True)
             self.thread.start()
+
     def _call_coro(self, coro):
         self._ensure_loop()
-        return asyncio.run_coroutine_threadsafe(coro, self.loop)    # commands
+        return asyncio.run_coroutine_threadsafe(coro, self.loop)  # commands
+
     def start(
             self,
             ip: str = DEFAULT_DEVICE_IP,
@@ -171,30 +200,47 @@ class ProxyController:
             timeout: float = DEFAULT_TIMEOUT,
     ):
         with self._lock:
-            if self.proxy is None:
-                self.proxy = SnmpSshProxy(
-                    ssh_host=ip,
-                    username=username,
-                    password=password,
-                    listen_addr=(listen_host, listen_port),
-                    response_timeout=timeout,
-                )
+            # Если прокси уже существует, закрываем его перед созданием нового
+            if self.proxy is not None:
+                try:
+                    self.close()
+                except Exception:
+                    pass
+                self.proxy = None
+
+
+            self.proxy = SnmpSshProxy(
+                ssh_host=ip,
+                username=username,
+                password=password,
+                listen_addr=(listen_host, listen_port),
+                response_timeout=timeout,
+            )
+
         print(f"SNMP proxy will listen on {listen_host}:{listen_port} (UDP). Type 'close' to stop.")
+
         fut = self._call_coro(self.proxy.start())
         try:
             fut.result()
+            real_host, real_port = self.proxy.listen_addr
+            print(f"[proxy] STARTED: Listening on {real_host}:{real_port} (UDP)")
         except Exception as e:
             print(f"[proxy] start failed: {e}")
+
     def close(self):
         with self._lock:
             if not self.proxy:
                 print("[proxy] nothing to stop")
                 return
+
             fut = self._call_coro(self.proxy.stop())
-        try:
-            fut.result()
-        except Exception as e:
-            print(f"[proxy] stop failed: {e}")
+            try:
+                fut.result()
+            except Exception as e:
+                print(f"[proxy] stop failed: {e}")
+            finally:
+                self.proxy = None
+
     def dispose(self):
         try:
             if self.proxy:
@@ -208,6 +254,8 @@ class ProxyController:
                 self.loop = None
                 self.thread = None
                 self.proxy = None
+
+
 # ======================= консоль =======================
 def repl():
     ctrl = ProxyController()
@@ -241,5 +289,7 @@ def repl():
     finally:
         ctrl.dispose()
         print("Bye.")
+
+
 if __name__ == "__main__":
     repl()

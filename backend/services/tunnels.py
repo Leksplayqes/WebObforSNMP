@@ -22,7 +22,6 @@ def _configured_ports() -> List[int]:
     try:
         ports = get_tunnel_ports()
     except Exception:
-        # Если конфиг не задан/сломался — используем дефолт.
         ports = list(DEFAULT_TUNNEL_PORTS)
     return list(ports)
 

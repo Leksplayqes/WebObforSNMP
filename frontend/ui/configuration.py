@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import time
 
 from typing import Dict, List, Optional, Tuple
@@ -496,12 +497,12 @@ def render_wiring_configuration() -> None:
                 cfg.setdefault("VIAVIcontrol", {})
                 cfg["VIAVIcontrol"]["wiring"] = st.session_state["wiring"]
             save_state()
-            json_input(["VIAVIcontrol", 'wiring'], new_value=st.session_state["wiring"])
+            asyncio.run((json_input(["VIAVIcontrol", 'wiring'], new_value=st.session_state["wiring"])))
             _flash("Привязки сохранены.", "success")
     with b:
         if st.button("🧹 Очистить привязки", width='stretch'):
             st.session_state["wiring"] = []
-            json_input(["VIAVIcontrol", 'wiring'], new_value=[])
+            asyncio.run(json_input(["VIAVIcontrol", 'wiring'], new_value=[]))
             save_state()
 
     if errors:
@@ -685,86 +686,72 @@ def render_configuration(client: BackendApiClient) -> None:
         if selected_labels:
             st.caption(f"Выбрано тестов: {len(selected_labels)}")
 
+    if "viavi_count" not in st.session_state:
+        saved_config = st.session_state.get("viavi_config", {})
+        st.session_state.viavi_count = len(saved_config) if saved_config else 1
+
     with col2:
         st.subheader("Управление VIAVI и Loopback")
 
-        st.session_state.setdefault(
-            "viavi_config",
-            {
-                "NumOne": {"ipaddr": "", "typeofport": {"Port1": "", "Port2": ""}},
-                "NumTwo": {"ipaddr": "", "typeofport": {"Port1": "", "Port2": ""}},
-            },
-        )
+        # Инициализация счетчика, если он отсутствует
+        if "viavi_count" not in st.session_state:
+            st.session_state.viavi_count = 1
 
-        tab1, tab2, tab3 = st.tabs(["**Viavi №1**", "**Viavi №2**", "**Loopback**"])
+        # Динамическое создание вкладок
+        viavi_tabs_names = [f"**Viavi №{i + 1}**" for i in range(st.session_state.viavi_count)]
+        all_tabs = st.tabs(viavi_tabs_names + ["**Loopback**"])
 
-        with tab1:
-            st.text_input(
-                "**IP Viavi №1**",
-                value=st.session_state.get("viavi1_ip", ""),
-                key="viavi1_ip",
-                on_change=viavi_sync_from_widgets,
-            )
-            p1, p2 = st.columns(2)
-            with p1:
-                st.selectbox(
-                    "Port 1",
-                    PORT_OPTIONS,
-                    index=_safe_index(PORT_OPTIONS, st.session_state.get("viavi1_port1", "")),
-                    key="viavi1_port1",
+        # Отрисовка вкладок VIAVI
+        for i in range(st.session_state.viavi_count):
+            num = i + 1
+            with all_tabs[i]:
+                st.text_input(
+                    f"**IP Viavi №{num}**",
+                    value=st.session_state.get(f"viavi{num}_ip", ""),
+                    key=f"viavi{num}_ip",
                     on_change=viavi_sync_from_widgets,
                 )
-            with p2:
-                st.selectbox(
-                    "Port 2",
-                    PORT_OPTIONS,
-                    index=_safe_index(PORT_OPTIONS, st.session_state.get("viavi1_port2", "")),
-                    key="viavi1_port2",
-                    on_change=viavi_sync_from_widgets,
-                )
+                p1, p2 = st.columns(2)
+                with p1:
+                    st.selectbox(
+                        "Port 1",
+                        PORT_OPTIONS,
+                        index=_safe_index(PORT_OPTIONS, st.session_state.get(f"viavi{num}_port1", "")),
+                        key=f"viavi{num}_port1",
+                        on_change=viavi_sync_from_widgets,
+                    )
+                with p2:
+                    st.selectbox(
+                        "Port 2",
+                        PORT_OPTIONS,
+                        index=_safe_index(PORT_OPTIONS, st.session_state.get(f"viavi{num}_port2", "")),
+                        key=f"viavi{num}_port2",
+                        on_change=viavi_sync_from_widgets,
+                    )
 
-        with tab2:
-            st.text_input(
-                "**IP Viavi №2**",
-                value=st.session_state.get("viavi2_ip", ""),
-                key="viavi2_ip",
-                on_change=viavi_sync_from_widgets,
-            )
-            p3, p4 = st.columns(2)
-            with p3:
-                st.selectbox(
-                    "Port 1",
-                    PORT_OPTIONS,
-                    index=_safe_index(PORT_OPTIONS, st.session_state.get("viavi2_port1", "")),
-                    key="viavi2_port1",
-                    on_change=viavi_sync_from_widgets,
-                )
-            with p4:
-                st.selectbox(
-                    "Port 2",
-                    PORT_OPTIONS,
-                    index=_safe_index(PORT_OPTIONS, st.session_state.get("viavi2_port2", "")),
-                    key="viavi2_port2",
-                    on_change=viavi_sync_from_widgets,
-                )
-
-        with tab3:
+        with all_tabs[-1]:
             lb1, lb2 = st.columns(2)
             with lb1:
-                st.selectbox(
-                    "**Слот с loopback**",
-                    LOOPBACK_SLOTS,
-                    key="slot_loopback",
-                    on_change=on_change,
-                )
+                st.selectbox("**Слот с loopback**", LOOPBACK_SLOTS, key="slot_loopback", on_change=on_change)
             with lb2:
-                st.selectbox(
-                    "**Порт с loopback**",
-                    LOOPBACK_PORTS,
-                    key="port_loopback",
-                    on_change=on_change,
-                )
+                st.selectbox("**Порт с loopback**", LOOPBACK_PORTS, key="port_loopback", on_change=on_change)
 
+        add_col, del_col = st.columns(2)
+        with add_col:
+            if st.button("➕ Добавить",disabled=st.session_state.viavi_count == 5, use_container_width=True):
+                st.session_state.viavi_count += 1
+                save_state()
+                st.rerun()
+        with del_col:
+            if st.button("➖ Удалить", disabled=st.session_state.viavi_count <= 1, use_container_width=True):
+                num = st.session_state.viavi_count
+                st.session_state.pop(f"viavi{num}_ip", None)
+                st.session_state.pop(f"viavi{num}_port1", None)
+                st.session_state.pop(f"viavi{num}_port2", None)
+
+                st.session_state.viavi_count -= 1
+                save_state()
+                st.rerun()
 
         save_state()
         st.markdown("---")
@@ -775,9 +762,27 @@ def render_configuration(client: BackendApiClient) -> None:
         st.subheader("Статус устройства")
         dev = st.session_state.get("device_info")
 
-        st.write(f"**Имя:** {dev.get('name') or '—'}")
-        st.write(f"**IP:** {dev.get('ipaddr') or '—'}")
+        def centered_box(text):
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: #e6f4ea; 
+                    color: #1e7e34; 
+                    padding: 10px; 
+                    border-radius: 8px; 
+                    text-align: center; 
+                    font-weight: bold; 
+                    margin-bottom: 10px;
+                    font-size: 1.1rem;
+                ">
+                    {text}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
+        centered_box(dev.get('name') or '—')
+        centered_box(dev.get('ipaddr') or '—')
         slots = dev.get("slots_dict") or {}
         if slots:
             st.write("---")
@@ -851,6 +856,7 @@ def render_configuration(client: BackendApiClient) -> None:
                 st.code(current_log, language="bash")
 
             if is_running:
+
                 time.sleep(2)
                 st.rerun()
             else:

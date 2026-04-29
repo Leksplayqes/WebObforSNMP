@@ -2,19 +2,19 @@
     "VIAVIcontrol": {
         "settings": {
             "NumOne": {
-                "ipaddr": "192.168.111.229",
+                "ipaddr": "123123",
                 "port": 8006,
                 "typeofport": {
                     "Port1": "STM-4",
-                    "Port2": "STM-16"
+                    "Port2": "STM-4"
                 }
             },
             "NumTwo": {
-                "ipaddr": "192.168.72.230",
+                "ipaddr": "1231",
                 "port": 8006,
                 "typeofport": {
-                    "Port1": "STM-16",
-                    "Port2": "STM-16"
+                    "Port1": "STM-4",
+                    "Port2": "STM-64"
                 }
             }
         },
@@ -76,15 +76,14 @@
     },
     "CurrentEQ": {
         "name": "OSM-KMv3",
-        "ipaddr": "192.168.72.70",
-        "pass": "Osmkm_66_",
+        "ipaddr": "192.168.111.63",
+        "pass": "Osmkm_63_",
         "slots_dict": {
             "3": "STM-1/4",
             "4": "63E1M",
-            "5": "STM-16M",
+            "5": "Eth100M",
             "6": "STM-64M",
             "9": "KC-M12",
-            "10": "KC-M12",
             "11": "STM-64M",
             "12": "STM-64M",
             "13": "STM-64M",
@@ -100,7 +99,8 @@
             "6": "STM-16M",
             "10": "KC-M12",
             "12": "STM-64M"
-        }
+        },
+        "snmp_port": 58498
     },
     "OSMKv6": {
         "prior_dict": {

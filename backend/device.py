@@ -144,7 +144,7 @@ async def device_info(
         if req.loopback is not None:
             payload = {k: v for k, v in req.loopback.model_dump().items() if v is not None}
             if payload:
-                json_input(["CurrentEQ", "loopback"], payload)
+                await json_input(["CurrentEQ", "loopback"], payload)
     except Exception as exc:
         add_log(f"save loopback failed: {exc}", "ERROR")
 

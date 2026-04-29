@@ -5,7 +5,7 @@ import time
 import paramiko
 import re
 import sys
-
+import os
 from pysnmp.hlapi.asyncio import (bulk_cmd, SnmpEngine, UsmUserData, UdpTransportTarget, ContextData, ObjectType,
                                   get_cmd, set_cmd,
                                   ObjectIdentity, OctetString)
@@ -14,8 +14,12 @@ from pysnmp.hlapi.asyncio import (bulk_cmd, SnmpEngine, UsmUserData, UdpTranspor
 def oids():
     with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
         oid = json.load(jsonblock)
-        oids = oid[oid["CurrentEQ"]["name"]]
-        return oids
+        if oid["CurrentEQ"]["name"] != "-":
+            oids = oid[oid["CurrentEQ"]["name"]]
+            return oids
+        else:
+            pass
+
 
 
 def oidsSNMP():
@@ -38,21 +42,28 @@ def oidsVIAVI():
         return oidsVIAVI
 
 
-def json_input(key_path, new_value):
-    with open('OIDstatusNEW.json', 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    current = data
-    for i, key in enumerate(key_path):
-        if i < len(key_path) - 1:
-            if key in current and isinstance(current[key], dict):
+file_lock = asyncio.Lock()
+
+
+async def json_input(key_path, new_value):
+    async with file_lock:
+        filename = 'OIDstatusNEW.json'
+
+        # Читаем
+        with open(filename, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+
+        current = data
+        for i, key in enumerate(key_path):
+            if i < len(key_path) - 1:
                 current = current[key]
             else:
-                print(f"Ошибка: Путь '{key_path[:i + 1]}' не найден в JSON.")
-                return False
-        else:
-            current[key] = new_value
-    with open('OIDstatusNEW.json', 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+                current[key] = new_value
+
+        # Пишем
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
 
 
 def run_tunnel(ip, password):
@@ -70,7 +81,7 @@ async def multi_snmp_get(oids: list):
     object_types = [ObjectType(ObjectIdentity(oid)) for oid in oids]
     error_indication, error_status, error_index, var_binds = await get_cmd(
         SnmpEngine(), UsmUserData("admin"),
-        await UdpTransportTarget.create(("localhost", 1161), timeout=0.5, retries=1),
+        await UdpTransportTarget.create(("localhost", oidsSNMP()["snmp_port"]), timeout=0.5, retries=1),
         ContextData(),
         *object_types)
     return [str(var_bind[1]) for var_bind in var_binds]
@@ -81,7 +92,7 @@ async def snmp_set_bulk(oid_value_pairs, community="admin"):
     error_indication, error_status, error_index, var_binds = await set_cmd(
         SnmpEngine(),
         UsmUserData(community),
-        await UdpTransportTarget.create(("localhost", 1161), timeout=0.5, retries=1),
+        await UdpTransportTarget.create(("localhost", oidsSNMP()["snmp_port"]), timeout=0.5, retries=1),
         ContextData(),
         *object_types)
     return [str(var_bind[1]) if var_bind[1] else None
@@ -93,7 +104,7 @@ async def snmp_set(oid, value):
         error_indication, error_status, error_index, var_binds = await set_cmd(
             SnmpEngine(),
             UsmUserData("admin"),
-            await UdpTransportTarget.create(("localhost", 1161)),
+            await UdpTransportTarget.create(("localhost", oidsSNMP()["snmp_port"])),
             ContextData(),
             ObjectType(ObjectIdentity(oid), value)
         )
@@ -111,7 +122,8 @@ async def snmp_set(oid, value):
 async def snmp_get(oid):
     error_indication, error_status, error_index, var_binds = \
         await get_cmd(SnmpEngine(), UsmUserData("admin"),
-                      await UdpTransportTarget.create(("localhost", 1161), timeout=0.5, retries=1),
+                      await UdpTransportTarget.create(("localhost", int(oidsSNMP()["snmp_port"])), timeout=0.5,
+                                                      retries=1),
                       ContextData(), ObjectType(ObjectIdentity(oid)))
     for value in var_binds:
         return value[1]
@@ -124,7 +136,7 @@ async def snmp_getBulk(oid: str, max_repetitions: int):
     error_indication, error_status, error_index, var_binds = await bulk_cmd(
         SnmpEngine(),
         UsmUserData("admin"),
-        await UdpTransportTarget.create(("localhost", 1161)),
+        await UdpTransportTarget.create(("localhost", oidsSNMP()["snmp_port"])),
         ContextData(),
         0, max_repetitions,
         ObjectType(ObjectIdentity(base)),
@@ -149,7 +161,7 @@ async def snmp_multiset(oid_value_pairs):
         error_indication, error_status, error_index, var_binds = await set_cmd(
             SnmpEngine(),
             UsmUserData("admin"),
-            await UdpTransportTarget.create(("localhost", 1161), timeout=2, retries=2),
+            await UdpTransportTarget.create(("localhost", oidsSNMP()["snmp_port"]), timeout=2, retries=2),
             ContextData(),
             *object_types
         )
@@ -169,11 +181,14 @@ async def get_device_info():
         device_info = await snmp_get("1.3.6.1.2.1.1.1.0")
         name = str(device_info).split()[0]
         version = '7' if name in ['OSM-K', 'P-317S'] else ('2' if name in ["SMD2"] else '3')
-        json_input(["CurrentEQ", "name"], f"{name}v{version}")
+        if device_info:
+            await json_input(["CurrentEQ", "name"], f"{name}v{version}")
+        else:
+            return False
         return f"{name}v{version}"
     except Exception as e:
         print(f"Ошибка получения информации об устройстве: {e}")
-        return "Unknown"
+        return False
 
 
 async def equpimentV7():
@@ -184,7 +199,7 @@ async def equpimentV7():
         for j in oids()["blockOID"]['statusOID']:
             if noNullIdReal[k] in oids()["blockOID"]['statusOID'][j]:
                 noNullIdReal[k] = j
-    json_input(["CurrentEQ", "slots_dict"], noNullIdReal)
+    await json_input(["CurrentEQ", "slots_dict"], noNullIdReal)
     return noNullIdReal
 
 
