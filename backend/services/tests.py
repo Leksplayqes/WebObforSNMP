@@ -72,11 +72,15 @@ class TestExecutionService:
         if not nodeids:
             raise HTTPException(status_code=400, detail="Не выбраны тесты для запуска")
 
-        cfg = ensure_config()
-        ip = (cfg.get("CurrentEQ") or {}).get("ipaddr") or ""
-        password = (cfg.get("CurrentEQ") or {}).get("pass") or ""
-        if not ip:
-            raise HTTPException(status_code=400, detail="Не настроен IP оборудования для запуска тестов")
+        devices = _extract_devices(request, ensure_config())
+        if not devices:
+            raise HTTPException(
+                status_code=400,
+                detail="Не настроены устройства для запуска тестов: передайте settings.devices или заполните CurrentEQ",
+            )
+        selected_device = devices[0]
+        ip = selected_device.get("ipaddr") or ""
+        password = selected_device.get("password") or ""
 
         name_by_nodeid = {**{v: k for k, v in SYNC_TESTS_CATALOG.items()},
                           **{v: k for k, v in ALARM_TESTS_CATALOG.items()},
@@ -139,6 +143,8 @@ class TestExecutionService:
             "returncode": None,
             "expected_total": None,
             "lease_port": lease.port,
+            "device": selected_device,
+            "devices": devices,
             "title": title,
         }
         try:
@@ -408,6 +414,49 @@ def _generate_job_id() -> str:
 
 def _norm_nodeid(node_id: str) -> str:
     return node_id.replace(" ::", "::").replace(":: ", "::").replace(" / ", "/").strip()
+
+
+def _extract_devices(request: TestsRunRequest, cfg: Dict[str, object]) -> List[Dict[str, str]]:
+    devices: List[Dict[str, str]] = []
+    raw_settings = request.settings or {}
+    raw_devices = raw_settings.get("devices") if isinstance(raw_settings, dict) else None
+    if isinstance(raw_devices, list):
+        for idx, item in enumerate(raw_devices):
+            if not isinstance(item, dict):
+                continue
+            ip = str(item.get("ipaddr") or "").strip()
+            if not ip:
+                continue
+            devices.append(
+                {
+                    "name": str(item.get("name") or f"device-{idx + 1}").strip(),
+                    "ipaddr": ip,
+                    "password": str(item.get("password") or ""),
+                }
+            )
+    if devices:
+        return devices
+    target_ip = ""
+    if isinstance(raw_settings, dict):
+        target_ip = str(raw_settings.get("target_device_ip") or "").strip()
+    registry = (cfg.get("Devices") or {}) if isinstance(cfg, dict) else {}
+    if target_ip and isinstance(registry, dict):
+        reg_item = registry.get(target_ip)
+        if isinstance(reg_item, dict) and str(reg_item.get("ipaddr") or "").strip():
+            return [{
+                "name": str(reg_item.get("name") or "target"),
+                "ipaddr": str(reg_item.get("ipaddr") or "").strip(),
+                "password": str(reg_item.get("pass") or reg_item.get("password") or ""),
+            }]
+    current = (cfg.get("CurrentEQ") or {}) if isinstance(cfg, dict) else {}
+    ip = str(current.get("ipaddr") or "").strip()
+    if not ip:
+        return []
+    return [{
+        "name": str(current.get("name") or "current"),
+        "ipaddr": ip,
+        "password": str(current.get("pass") or ""),
+    }]
 
 
 def _recalc_summary(cases: Iterable[Dict[str, object]], finished: bool) -> Dict[str, object]:

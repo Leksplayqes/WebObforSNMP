@@ -74,6 +74,7 @@ class DeviceInfo(BaseModel):
     slots_dict: Dict[str, Any] = Field(default_factory=dict)
     viavi: Dict[str, Any] = Field(default_factory=dict)
     loopback: Dict[str, Any] = Field(default_factory=dict)
+    devices: Dict[str, Any] = Field(default_factory=dict)
 
 
 class UtilityJobPayload(BaseModel):
