@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import subprocess
 import time
 import paramiko
@@ -23,6 +24,14 @@ def oids():
 
 
 def oidsSNMP():
+    snapshot_raw = os.getenv("OSMK_CURRENT_EQ_SNAPSHOT")
+    if snapshot_raw:
+        try:
+            snapshot = json.loads(snapshot_raw)
+            if isinstance(snapshot, dict):
+                return snapshot
+        except Exception:
+            pass
     with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
         oid = json.load(jsonblock)
         oidsSNMP = oid["CurrentEQ"]

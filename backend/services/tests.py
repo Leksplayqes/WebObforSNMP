@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime
+import json
 import os
 import re
 import sys
@@ -152,6 +153,13 @@ class TestExecutionService:
             "devices": devices,
             "title": title,
         }
+        current_eq_snapshot = dict((ensure_config() or {}).get("CurrentEQ") or {})
+        current_eq_snapshot.update({
+            "name": str(selected_device.get("name") or current_eq_snapshot.get("name") or ""),
+            "ipaddr": str(selected_device.get("ipaddr") or current_eq_snapshot.get("ipaddr") or ""),
+            "pass": str(selected_device.get("password") or current_eq_snapshot.get("pass") or ""),
+        })
+        payload["current_eq_snapshot"] = current_eq_snapshot
         try:
             record = self._results.create(
                 record_id=job_id,
@@ -238,6 +246,7 @@ class TestExecutionService:
 
         payload = record.payload
         device_ctx = (payload.get("device") or {}) if isinstance(payload, dict) else {}
+        snapshot_ctx = (payload.get("current_eq_snapshot") or {}) if isinstance(payload, dict) else {}
         if isinstance(device_ctx, dict):
             try:
                 json_set(["CurrentEQ"], {
@@ -265,12 +274,20 @@ class TestExecutionService:
             f"--junitxml={report_path}",
             *nodeids,
         ]
+        proc_env = dict(os.environ)
+        if isinstance(snapshot_ctx, dict) and snapshot_ctx:
+            try:
+                proc_env["OSMK_CURRENT_EQ_SNAPSHOT"] = json.dumps(snapshot_ctx, ensure_ascii=False)
+            except Exception:
+                pass
+
         proc = Popen(
             cmd,
             cwd=str(self._project_root),
             text=True,
             stdout=PIPE,
             stderr=STDOUT,
+            env=proc_env,
             bufsize=1,
             universal_newlines=True,
         )
