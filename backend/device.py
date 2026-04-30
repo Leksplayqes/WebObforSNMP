@@ -61,6 +61,16 @@ def _save_device_to_registry(data: Dict[str, Any], req: DeviceInfoRequest) -> No
     json_set(["Devices", ip], payload)
 
 
+def _select_device(ip: str) -> Dict[str, Any]:
+    data = ensure_config() or {}
+    devices = (data.get("Devices") or {})
+    if ip not in devices:
+        raise KeyError(ip)
+    selected = devices.get(ip) or {}
+    json_set(["CurrentEQ"], selected)
+    return selected
+
+
 def _update_img_by_type():
     dev = oidsSNMP()["name"]
     if dev == "OSM-KMv3":
@@ -195,6 +205,18 @@ async def device_info(
         "loopback": current.get("loopback", {}),
         "devices": devices,
     }
+
+
+@router.post("/device/select")
+async def select_device(payload: Dict[str, Any]) -> Dict[str, Any]:
+    ip = str((payload or {}).get("ip_address") or "").strip()
+    if not ip:
+        return {"success": False, "error": "ip_address is required"}
+    try:
+        selected = _select_device(ip)
+    except KeyError:
+        return {"success": False, "error": f"Device {ip} is not found in registry"}
+    return {"success": True, "device": selected}
 
 
 @router.post("/firmware/upgrade/img")

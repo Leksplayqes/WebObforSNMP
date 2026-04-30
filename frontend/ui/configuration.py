@@ -10,7 +10,7 @@ import streamlit as st
 from backend.device import upgrade_firmware_img, upgrade_firmware_block, upgrade_state
 from api import BackendApiClient, BackendApiError, normalise_nodeids
 from MainConnectFunc import oids, json_input, oidsSNMP, ssh_exec_commands
-from state import on_change, save_state, viavi_sync_from_widgets, on_slot_change
+from state import on_change, save_state, viavi_sync_from_widgets, on_slot_change, apply_state
 from device_upgrade.slot_update import block_update_by_dev
 
 # ------------------------------- Constants -------------------------------
@@ -548,6 +548,34 @@ def render_configuration(client: BackendApiClient) -> None:
 
     with col1:
         st.subheader("Основные настройки")
+        known_devices = st.session_state.get("known_devices") or {}
+        device_options = [""] + sorted(known_devices.keys())
+        selected_device = st.selectbox(
+            "**Сетевое устройство (вкладка/контекст)**",
+            device_options,
+            key="current_device_ip",
+            help="Для каждого устройства сохраняется свой ui_state_<ip>.json и отдельный рабочий контекст.",
+        )
+        loaded_key = st.session_state.get("loaded_device_key", "")
+        if selected_device and selected_device != loaded_key:
+            save_state(device_key=loaded_key or None)
+            apply_state(device_key=selected_device)
+            st.session_state["loaded_device_key"] = selected_device
+            st.rerun()
+        if selected_device and st.button("Переключить активное устройство", use_container_width=True):
+            try:
+                res = client.select_device(selected_device)
+            except BackendApiError as exc:
+                _flash(f"Не удалось переключить устройство: {exc}", "error")
+            else:
+                if res.get("success"):
+                    st.session_state["device_info"] = res.get("device", {})
+                    st.session_state["ip_address_input"] = selected_device
+                    st.session_state["loaded_device_key"] = selected_device
+                    save_state(device_key=selected_device)
+                    _flash(f"Активное устройство: {selected_device}", "success")
+                else:
+                    _flash(res.get("error") or "Не удалось переключить устройство.", "error")
 
         device = st.session_state.get("device_info") or {}
         ip_default = device.get("ipaddr") or st.session_state.get("ip_address_input", "")
@@ -597,11 +625,13 @@ def render_configuration(client: BackendApiClient) -> None:
                 else:
                     st.session_state["device_info"] = info.model_dump()
                     st.session_state["known_devices"] = getattr(info, "devices", {}) or {}
+                    st.session_state["current_device_ip"] = _trim(ip)
+                    st.session_state["loaded_device_key"] = _trim(ip)
                     if getattr(info, "viavi", None):
                         st.session_state["viavi_config"] = info.viavi
                     if getattr(info, "loopback", None):
                         st.session_state["saved_loopback"] = info.loopback
-                    save_state()
+                    save_state(device_key=_trim(ip))
                     _flash("Устройство успешно проверено.", "success")
         can_unmask = _is_valid_ip_like(ip)
         if st.button("Включить анализ портов", disabled=not can_unmask, width='stretch'):
