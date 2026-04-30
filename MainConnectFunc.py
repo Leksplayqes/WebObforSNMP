@@ -22,6 +22,15 @@ def oids():
 
 
 def oidsSNMP():
+    snapshot_path = os.getenv("OSMK_CURRENT_EQ_SNAPSHOT_PATH")
+    if snapshot_path:
+        try:
+            with open(snapshot_path, "r", encoding="utf-8") as fp:
+                snapshot = json.load(fp)
+            if isinstance(snapshot, dict):
+                return snapshot
+        except Exception:
+            pass
     snapshot_raw = os.getenv("OSMK_CURRENT_EQ_SNAPSHOT")
     if snapshot_raw:
         try:

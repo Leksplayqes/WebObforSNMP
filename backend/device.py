@@ -1,6 +1,8 @@
 """Endpoints related to device metadata and SNMP proxy initialisation."""
 from __future__ import annotations
 import threading
+import json
+from pathlib import Path
 from typing import Any, Dict
 import sys
 from fastapi import APIRouter, Depends
@@ -8,7 +10,7 @@ from fastapi import APIRouter, Depends
 from MainConnectFunc import equpimentV7, get_device_info, oidsSNMP
 from unit_tests.SnmpV7alarm import setSFP_Mode, alarmplusmaslcnctSTM, alarmplusmask
 
-from .config import ensure_config, json_input, json_set
+from .config import ensure_config, json_input, json_set, PROJECT_ROOT
 from .logs import add_log
 from backend.services.models import DeviceInfoRequest, ViaviSettings, ViaviUnitSettings, UpgradeRequestImg, \
     UpgradeRequestBlock
@@ -21,6 +23,19 @@ upgrade_state = {
     "log": "",
     "is_running": False
 }
+
+
+def _device_context_path(ip: str) -> Path:
+    safe = "".join(ch if ch.isalnum() or ch in ("-", "_", ".") else "_" for ch in ip)
+    base = PROJECT_ROOT / "device_contexts"
+    base.mkdir(parents=True, exist_ok=True)
+    return base / f"{safe}.json"
+
+
+def _persist_device_context(ip: str, payload: Dict[str, Any]) -> None:
+    if not ip:
+        return
+    _device_context_path(ip).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _save_viavi_unit(unit_name: str, unit: ViaviUnitSettings | None) -> None:
@@ -59,6 +74,7 @@ def _save_device_to_registry(data: Dict[str, Any], req: DeviceInfoRequest) -> No
         "active_slots": current.get("active_slots") or {},
     }
     json_set(["Devices", ip], payload)
+    _persist_device_context(ip, payload)
 
 
 def _select_device(ip: str) -> Dict[str, Any]:
@@ -68,6 +84,7 @@ def _select_device(ip: str) -> Dict[str, Any]:
         raise KeyError(ip)
     selected = devices.get(ip) or {}
     json_set(["CurrentEQ"], selected)
+    _persist_device_context(ip, selected)
     return selected
 
 

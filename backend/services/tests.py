@@ -160,6 +160,12 @@ class TestExecutionService:
             "pass": str(selected_device.get("password") or current_eq_snapshot.get("pass") or ""),
         })
         payload["current_eq_snapshot"] = current_eq_snapshot
+        safe_ip = "".join(ch if ch.isalnum() or ch in ("-", "_", ".") else "_" for ch in str(selected_device.get("ipaddr") or ""))
+        if safe_ip:
+            snapshot_file = self._project_root / "device_contexts" / f"{safe_ip}.json"
+            snapshot_file.parent.mkdir(parents=True, exist_ok=True)
+            snapshot_file.write_text(json.dumps(current_eq_snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+            payload["current_eq_snapshot_path"] = str(snapshot_file)
         try:
             record = self._results.create(
                 record_id=job_id,
@@ -280,6 +286,9 @@ class TestExecutionService:
                 proc_env["OSMK_CURRENT_EQ_SNAPSHOT"] = json.dumps(snapshot_ctx, ensure_ascii=False)
             except Exception:
                 pass
+        snapshot_path = payload.get("current_eq_snapshot_path")
+        if snapshot_path:
+            proc_env["OSMK_CURRENT_EQ_SNAPSHOT_PATH"] = str(snapshot_path)
 
         proc = Popen(
             cmd,
