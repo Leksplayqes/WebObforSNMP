@@ -1,12 +1,10 @@
 import asyncio
 import json
-import os
 import subprocess
 import time
 import paramiko
 import re
 import sys
-import os
 from pysnmp.hlapi.asyncio import (bulk_cmd, SnmpEngine, UsmUserData, UdpTransportTarget, ContextData, ObjectType,
                                   get_cmd, set_cmd,
                                   ObjectIdentity, OctetString)
@@ -66,6 +64,8 @@ async def json_input(key_path, new_value):
         current = data
         for i, key in enumerate(key_path):
             if i < len(key_path) - 1:
+                if key not in current or not isinstance(current.get(key), dict):
+                    current[key] = {}
                 current = current[key]
             else:
                 current[key] = new_value
