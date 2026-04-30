@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 
 import streamlit as st
 from MainConnectFunc import json_input
+from pathlib import Path
 from frontend.constants import DEFAULT_API_BASE_URL, STATE_FILE
 
 
@@ -42,16 +43,24 @@ def initialize_session_state() -> None:
     st.session_state.setdefault("active_slots", {})
 
 
-def load_state() -> Dict[str, Any]:
-    if STATE_FILE.exists():
+def _state_file_for_device(device_key: str | None = None) -> Path:
+    if not device_key:
+        return STATE_FILE
+    safe = "".join(ch if ch.isalnum() or ch in ("-", "_", ".") else "_" for ch in str(device_key))
+    return STATE_FILE.with_name(f"{STATE_FILE.stem}_{safe}{STATE_FILE.suffix}")
+
+
+def load_state(device_key: str | None = None) -> Dict[str, Any]:
+    state_file = _state_file_for_device(device_key)
+    if state_file.exists():
         try:
-            return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+            return json.loads(state_file.read_text(encoding="utf-8"))
         except Exception:
             return {}
     return {}
 
 
-def save_state() -> None:
+def save_state(device_key: str | None = None) -> None:
     asyncio.run(json_input(["CurrentEQ", "loopback", "slot"], st.session_state.get("slot_loopback", "")))
     asyncio.run(json_input(["CurrentEQ", "loopback", "port"], st.session_state.get("port_loopback", "")))
     state = {
@@ -74,7 +83,7 @@ def save_state() -> None:
         "active_slots": st.session_state.get("active_slots", {}),
         "current_job_id": st.session_state.get("current_job_id"),
     }
-    STATE_FILE.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+    _state_file_for_device(device_key).write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def on_slot_change():
@@ -88,8 +97,8 @@ def on_slot_change():
     asyncio.run(json_input(["CurrentEQ", 'active_slots'], new_value=st.session_state["active_slots"]))
 
 
-def apply_state() -> None:
-    saved = load_state()
+def apply_state(device_key: str | None = None) -> None:
+    saved = load_state(device_key)
     if not saved:
         return
 
