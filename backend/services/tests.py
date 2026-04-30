@@ -153,18 +153,20 @@ class TestExecutionService:
             "devices": devices,
             "title": title,
         }
-        current_eq_snapshot = dict((ensure_config() or {}).get("CurrentEQ") or {})
+        full_cfg_snapshot = dict(ensure_config() or {})
+        current_eq_snapshot = dict((full_cfg_snapshot.get("CurrentEQ") or {}))
         current_eq_snapshot.update({
             "name": str(selected_device.get("name") or current_eq_snapshot.get("name") or ""),
             "ipaddr": str(selected_device.get("ipaddr") or current_eq_snapshot.get("ipaddr") or ""),
             "pass": str(selected_device.get("password") or current_eq_snapshot.get("pass") or ""),
         })
+        full_cfg_snapshot["CurrentEQ"] = current_eq_snapshot
         payload["current_eq_snapshot"] = current_eq_snapshot
         safe_ip = "".join(ch if ch.isalnum() or ch in ("-", "_", ".") else "_" for ch in str(selected_device.get("ipaddr") or ""))
         if safe_ip:
             snapshot_file = self._project_root / "device_contexts" / f"{safe_ip}.json"
             snapshot_file.parent.mkdir(parents=True, exist_ok=True)
-            snapshot_file.write_text(json.dumps(current_eq_snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+            snapshot_file.write_text(json.dumps(full_cfg_snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
             payload["current_eq_snapshot_path"] = str(snapshot_file)
         try:
             record = self._results.create(
@@ -289,6 +291,7 @@ class TestExecutionService:
         snapshot_path = payload.get("current_eq_snapshot_path")
         if snapshot_path:
             proc_env["OSMK_CURRENT_EQ_SNAPSHOT_PATH"] = str(snapshot_path)
+            proc_env["OSMK_CONFIG_SNAPSHOT_PATH"] = str(snapshot_path)
 
         proc = Popen(
             cmd,

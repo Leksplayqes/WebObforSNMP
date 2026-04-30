@@ -9,15 +9,23 @@ from pysnmp.hlapi.asyncio import (bulk_cmd, SnmpEngine, UsmUserData, UdpTranspor
                                   get_cmd, set_cmd,
                                   ObjectIdentity, OctetString)
 
+DEFAULT_CONFIG_PATH = r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json"
+
+
+def _config_path() -> str:
+    return os.getenv("OSMK_CONFIG_SNAPSHOT_PATH") or DEFAULT_CONFIG_PATH
+
+
+def _read_config() -> dict:
+    with open(_config_path(), "r", encoding="utf-8") as jsonblock:
+        return json.load(jsonblock)
+
 
 def oids():
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        if oid["CurrentEQ"]["name"] != "-":
-            oids = oid[oid["CurrentEQ"]["name"]]
-            return oids
-        else:
-            pass
+    oid = _read_config()
+    if oid["CurrentEQ"]["name"] != "-":
+        oids = oid[oid["CurrentEQ"]["name"]]
+        return oids
 
 
 
@@ -39,10 +47,9 @@ def oidsSNMP():
                 return snapshot
         except Exception:
             pass
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        oidsSNMP = oid["CurrentEQ"]
-        return oidsSNMP
+    oid = _read_config()
+    oidsSNMP = oid["CurrentEQ"]
+    return oidsSNMP
 
 
 def find_KS():
@@ -52,10 +59,9 @@ def find_KS():
 
 
 def oidsVIAVI():
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        oidsVIAVI = oid["VIAVIcontrol"]
-        return oidsVIAVI
+    oid = _read_config()
+    oidsVIAVI = oid["VIAVIcontrol"]
+    return oidsVIAVI
 
 
 file_lock = asyncio.Lock()
@@ -63,7 +69,7 @@ file_lock = asyncio.Lock()
 
 async def json_input(key_path, new_value):
     async with file_lock:
-        filename = 'OIDstatusNEW.json'
+        filename = _config_path()
 
         # Читаем
         with open(filename, 'r', encoding='utf-8') as f:
