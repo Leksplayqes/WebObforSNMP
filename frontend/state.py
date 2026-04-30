@@ -61,8 +61,6 @@ def load_state(device_key: str | None = None) -> Dict[str, Any]:
 
 
 def save_state(device_key: str | None = None) -> None:
-    asyncio.run(json_input(["CurrentEQ", "loopback", "slot"], st.session_state.get("slot_loopback", "")))
-    asyncio.run(json_input(["CurrentEQ", "loopback", "port"], st.session_state.get("port_loopback", "")))
     state = {
         "api_base_url": st.session_state.get("api_base_url", DEFAULT_API_BASE_URL),
         "device_info": st.session_state.get("device_info"),
@@ -94,7 +92,6 @@ def on_slot_change():
         for slot_id, slot_name in slots.items()
         if st.session_state.get(f"chk_{slot_id}")}
     save_state()
-    asyncio.run(json_input(["CurrentEQ", 'active_slots'], new_value=st.session_state["active_slots"]))
 
 
 def apply_state(device_key: str | None = None) -> None:

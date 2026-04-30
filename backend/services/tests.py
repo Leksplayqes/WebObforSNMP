@@ -162,12 +162,10 @@ class TestExecutionService:
         })
         full_cfg_snapshot["CurrentEQ"] = current_eq_snapshot
         payload["current_eq_snapshot"] = current_eq_snapshot
-        safe_ip = "".join(ch if ch.isalnum() or ch in ("-", "_", ".") else "_" for ch in str(selected_device.get("ipaddr") or ""))
-        if safe_ip:
-            snapshot_file = self._project_root / "device_contexts" / f"{safe_ip}.json"
-            snapshot_file.parent.mkdir(parents=True, exist_ok=True)
-            snapshot_file.write_text(json.dumps(full_cfg_snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
-            payload["current_eq_snapshot_path"] = str(snapshot_file)
+        snapshot_file = self._project_root / "device_contexts" / f"job_{job_id}.json"
+        snapshot_file.parent.mkdir(parents=True, exist_ok=True)
+        snapshot_file.write_text(json.dumps(full_cfg_snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+        payload["current_eq_snapshot_path"] = str(snapshot_file)
         try:
             record = self._results.create(
                 record_id=job_id,
