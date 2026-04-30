@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime
+import json
 import os
 import re
 import sys
@@ -14,7 +15,7 @@ from typing import Dict, Iterable, List, Optional
 from fastapi import BackgroundTasks, HTTPException
 import streamlit as st
 from shared.catalogs import ALARM_TESTS_CATALOG, SYNC_TESTS_CATALOG, STAT_TEST_CATALOG, COMM_TEST_CATALOG, OTHER_TEST_CATALOG
-from ..config import PROJECT_ROOT, REPORT_DIR, ensure_config
+from ..config import PROJECT_ROOT, REPORT_DIR, ensure_config, json_set
 from ..jobs import job_path, load_jobs_on_startup, save_job
 from backend.services.models import TestsRunRequest
 from ..result_repository import ResultRecord, ResultRepository
@@ -67,6 +68,11 @@ class TestExecutionService:
 
     # ------------------------------------------------------------------
     def run(self, request: TestsRunRequest, background_tasks: BackgroundTasks) -> Dict[str, object]:
+        if self._running_procs:
+            raise HTTPException(
+                status_code=409,
+                detail="Уже выполняется тестовый запуск. Параллельные прогоны отключены из-за общего CurrentEQ.",
+            )
         job_id = _generate_job_id()
         nodeids = [_norm_nodeid(x) for x in (request.selected_tests or []) if x.strip()]
         if not nodeids:
@@ -147,6 +153,19 @@ class TestExecutionService:
             "devices": devices,
             "title": title,
         }
+        full_cfg_snapshot = dict(ensure_config() or {})
+        current_eq_snapshot = dict((full_cfg_snapshot.get("CurrentEQ") or {}))
+        current_eq_snapshot.update({
+            "name": str(selected_device.get("name") or current_eq_snapshot.get("name") or ""),
+            "ipaddr": str(selected_device.get("ipaddr") or current_eq_snapshot.get("ipaddr") or ""),
+            "pass": str(selected_device.get("password") or current_eq_snapshot.get("pass") or ""),
+        })
+        full_cfg_snapshot["CurrentEQ"] = current_eq_snapshot
+        payload["current_eq_snapshot"] = current_eq_snapshot
+        snapshot_file = self._project_root / "device_contexts" / f"job_{job_id}.json"
+        snapshot_file.parent.mkdir(parents=True, exist_ok=True)
+        snapshot_file.write_text(json.dumps(full_cfg_snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+        payload["current_eq_snapshot_path"] = str(snapshot_file)
         try:
             record = self._results.create(
                 record_id=job_id,
@@ -232,6 +251,19 @@ class TestExecutionService:
             return
 
         payload = record.payload
+        device_ctx = (payload.get("device") or {}) if isinstance(payload, dict) else {}
+        snapshot_ctx = (payload.get("current_eq_snapshot") or {}) if isinstance(payload, dict) else {}
+        if isinstance(device_ctx, dict):
+            try:
+                json_set(["CurrentEQ"], {
+                    "name": str(device_ctx.get("name") or ""),
+                    "ipaddr": str(device_ctx.get("ipaddr") or ""),
+                    "pass": str(device_ctx.get("password") or device_ctx.get("pass") or ""),
+                })
+            except Exception as exc:
+                payload["stderr"] = (payload.get("stderr") or "") + f"\n[WARN] failed to set CurrentEQ for job: {exc}\n"
+                self._results.update(job_id, payload=payload)
+                save_job(job_id, self._results)
         payload["expected_total"] = None
         report_path = str(self._report_dir / f"{job_id}.xml")
         self._results.update(job_id, payload=payload)
@@ -248,12 +280,24 @@ class TestExecutionService:
             f"--junitxml={report_path}",
             *nodeids,
         ]
+        proc_env = dict(os.environ)
+        if isinstance(snapshot_ctx, dict) and snapshot_ctx:
+            try:
+                proc_env["OSMK_CURRENT_EQ_SNAPSHOT"] = json.dumps(snapshot_ctx, ensure_ascii=False)
+            except Exception:
+                pass
+        snapshot_path = payload.get("current_eq_snapshot_path")
+        if snapshot_path:
+            proc_env["OSMK_CURRENT_EQ_SNAPSHOT_PATH"] = str(snapshot_path)
+            proc_env["OSMK_CONFIG_SNAPSHOT_PATH"] = str(snapshot_path)
+
         proc = Popen(
             cmd,
             cwd=str(self._project_root),
             text=True,
             stdout=PIPE,
             stderr=STDOUT,
+            env=proc_env,
             bufsize=1,
             universal_newlines=True,
         )

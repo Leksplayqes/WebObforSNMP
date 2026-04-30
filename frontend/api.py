@@ -199,6 +199,9 @@ class BackendApiClient:
         data = self._post("/device/info", payload, timeout=500)
         return DeviceInfo.model_validate(data or {})
 
+    def select_device(self, ip: str) -> Dict[str, Any]:
+        return self._post("/device/select", {"ip_address": ip}, timeout=60)
+
     def run_port_unmask(
             self,
             *,

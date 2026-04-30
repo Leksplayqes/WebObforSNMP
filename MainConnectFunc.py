@@ -1,32 +1,57 @@
 import asyncio
 import json
+import os
 import subprocess
 import time
+import threading
 import paramiko
 import re
 import sys
-import os
 from pysnmp.hlapi.asyncio import (bulk_cmd, SnmpEngine, UsmUserData, UdpTransportTarget, ContextData, ObjectType,
                                   get_cmd, set_cmd,
                                   ObjectIdentity, OctetString)
 
+DEFAULT_CONFIG_PATH = r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json"
+
+
+def _config_path() -> str:
+    return os.getenv("OSMK_CONFIG_SNAPSHOT_PATH") or DEFAULT_CONFIG_PATH
+
+
+def _read_config() -> dict:
+    with open(_config_path(), "r", encoding="utf-8") as jsonblock:
+        return json.load(jsonblock)
+
 
 def oids():
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        if oid["CurrentEQ"]["name"] != "-":
-            oids = oid[oid["CurrentEQ"]["name"]]
-            return oids
-        else:
-            pass
+    oid = _read_config()
+    if oid["CurrentEQ"]["name"] != "-":
+        oids = oid[oid["CurrentEQ"]["name"]]
+        return oids
 
 
 
 def oidsSNMP():
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        oidsSNMP = oid["CurrentEQ"]
-        return oidsSNMP
+    snapshot_path = os.getenv("OSMK_CURRENT_EQ_SNAPSHOT_PATH")
+    if snapshot_path:
+        try:
+            with open(snapshot_path, "r", encoding="utf-8") as fp:
+                snapshot = json.load(fp)
+            if isinstance(snapshot, dict):
+                return snapshot
+        except Exception:
+            pass
+    snapshot_raw = os.getenv("OSMK_CURRENT_EQ_SNAPSHOT")
+    if snapshot_raw:
+        try:
+            snapshot = json.loads(snapshot_raw)
+            if isinstance(snapshot, dict):
+                return snapshot
+        except Exception:
+            pass
+    oid = _read_config()
+    oidsSNMP = oid["CurrentEQ"]
+    return oidsSNMP
 
 
 def find_KS():
@@ -36,18 +61,17 @@ def find_KS():
 
 
 def oidsVIAVI():
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        oidsVIAVI = oid["VIAVIcontrol"]
-        return oidsVIAVI
+    oid = _read_config()
+    oidsVIAVI = oid["VIAVIcontrol"]
+    return oidsVIAVI
 
 
-file_lock = asyncio.Lock()
+file_lock = threading.Lock()
 
 
 async def json_input(key_path, new_value):
-    async with file_lock:
-        filename = 'OIDstatusNEW.json'
+    with file_lock:
+        filename = _config_path()
 
         # Читаем
         with open(filename, 'r', encoding='utf-8') as f:
@@ -57,6 +81,8 @@ async def json_input(key_path, new_value):
         current = data
         for i, key in enumerate(key_path):
             if i < len(key_path) - 1:
+                if key not in current or not isinstance(current.get(key), dict):
+                    current[key] = {}
                 current = current[key]
             else:
                 current[key] = new_value
