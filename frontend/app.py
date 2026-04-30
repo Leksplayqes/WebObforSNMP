@@ -49,6 +49,8 @@ def main() -> None:
         sidebar_ui(client, api_base)
 
     # ========= MAIN CONTENT =========
+    active_device = st.session_state.get("current_device_ip") or st.session_state.get("ip_address_input") or "не выбран"
+    st.caption(f"Активный контекст устройства: **{active_device}**")
     tab_titles = ["Конфигурация", "Результаты", "Утилиты", "ТРАПы", "VIAVI VNC"]
     tabs = st.tabs(tab_titles)
 
