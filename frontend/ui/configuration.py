@@ -626,7 +626,6 @@ def render_configuration(client: BackendApiClient) -> None:
                     st.session_state["device_info"] = info.model_dump()
                     st.session_state["known_devices"] = getattr(info, "devices", {}) or {}
                     st.session_state["current_device_ip"] = _trim(ip)
-                    st.session_state["current_device_ip_selector"] = _trim(ip)
                     st.session_state["loaded_device_key"] = _trim(ip)
                     if getattr(info, "viavi", None):
                         st.session_state["viavi_config"] = info.viavi
