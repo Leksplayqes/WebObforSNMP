@@ -1,7 +1,9 @@
 import asyncio
 import json
+import os
 import subprocess
 import time
+import threading
 import paramiko
 import re
 import sys
@@ -64,11 +66,11 @@ def oidsVIAVI():
     return oidsVIAVI
 
 
-file_lock = asyncio.Lock()
+file_lock = threading.Lock()
 
 
 async def json_input(key_path, new_value):
-    async with file_lock:
+    with file_lock:
         filename = _config_path()
 
         # Читаем
