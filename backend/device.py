@@ -44,6 +44,23 @@ def _save_viavi_settings(settings: ViaviSettings) -> None:
     _save_viavi_unit("NumTwo", settings.NumTwo)
 
 
+def _save_device_to_registry(data: Dict[str, Any], req: DeviceInfoRequest) -> None:
+    ip = req.ip_address
+    if not ip:
+        return
+    current = (data or {}).get("CurrentEQ", {}) or {}
+    payload: Dict[str, Any] = {
+        "name": current.get("name") or "",
+        "ipaddr": ip,
+        "pass": req.password or "",
+        "slots_dict": current.get("slots_dict") or {},
+        "loopback": current.get("loopback") or {},
+        "snmp_type": current.get("snmp_type") or "",
+        "active_slots": current.get("active_slots") or {},
+    }
+    json_set(["Devices", ip], payload)
+
+
 def _update_img_by_type():
     dev = oidsSNMP()["name"]
     if dev == "OSM-KMv3":
@@ -164,6 +181,11 @@ async def device_info(
             add_log("Failed to release SNMP tunnel fo device/info")
     data = ensure_config()
     current = (data or {}).get("CurrentEQ", {}) or {}
+    try:
+        _save_device_to_registry(data, req)
+    except Exception as exc:
+        add_log(f"save device in registry failed: {exc}", "ERROR")
+    devices = (ensure_config() or {}).get("Devices", {}) or {}
 
     return {
         "name": current.get("name") or "",
@@ -171,6 +193,7 @@ async def device_info(
         "slots_dict": current.get("slots_dict") or {},
         "viavi": (data or {}).get("VIAVIcontrol", {}).get("settings", {}),
         "loopback": current.get("loopback", {}),
+        "devices": devices,
     }
 
 

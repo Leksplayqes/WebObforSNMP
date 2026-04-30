@@ -596,6 +596,7 @@ def render_configuration(client: BackendApiClient) -> None:
                     _flash(f"Не удалось получить информацию об устройстве: {exc}", "error")
                 else:
                     st.session_state["device_info"] = info.model_dump()
+                    st.session_state["known_devices"] = getattr(info, "devices", {}) or {}
                     if getattr(info, "viavi", None):
                         st.session_state["viavi_config"] = info.viavi
                     if getattr(info, "loopback", None):
@@ -621,6 +622,9 @@ def render_configuration(client: BackendApiClient) -> None:
             payload = {
                 "test_type": st.session_state.get("test_type_radio", "alarm"),
                 "selected_tests": nodeids,
+                "settings": {
+                    "target_device_ip": _trim(ip),
+                },
             }
 
             with st.spinner("Запускаем тесты..."):

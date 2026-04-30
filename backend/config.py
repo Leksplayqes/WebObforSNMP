@@ -16,6 +16,7 @@ DEFAULT_TUNNEL_PORTS: List[int] = [0, 0, 0]
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "CurrentEQ": {"name": "", "ipaddr": "", "pass": "", "slots_dict": {}},
+    "Devices": {},
     "TunnelManager": {"ports": DEFAULT_TUNNEL_PORTS},
 }
 

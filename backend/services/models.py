@@ -61,6 +61,12 @@ class TestsRunRequest(BaseModel):
     settings: Optional[Dict[str, Any]] = None
 
 
+class TestDevice(BaseModel):
+    name: Optional[str] = ""
+    ipaddr: str
+    password: Optional[str] = ""
+
+
 class ApiErrorModel(BaseModel):
     code: str
     message: str
@@ -191,6 +197,7 @@ __all__ = [
     "ViaviSettings",
     "DeviceInfoRequest",
     "TestsRunRequest",
+    "TestDevice",
     "ApiErrorModel",
     "SuccessResponse",
     "HistoryLimit",
