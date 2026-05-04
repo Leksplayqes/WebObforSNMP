@@ -149,6 +149,15 @@ class TestExecutionService:
             # Do not block run startup if compatibility sync fails.
             pass
 
+        # Refresh runtime metadata for selected device inside active tunnel.
+        # This mirrors "Проверить подключение" flow and updates CurrentEQ name/slots.
+        try:
+            from MainConnectFunc import get_device_info, equpimentV7
+            asyncio.run(get_device_info())
+            asyncio.run(equpimentV7())
+        except Exception:
+            pass
+
         # Ensure SNMP tunnel is really ready before launching pytest.
         # Without this guard, first SNMP requests may fail right after device switch.
         if not _wait_snmp_ready(timeout_sec=3.0, step_sec=0.3):
