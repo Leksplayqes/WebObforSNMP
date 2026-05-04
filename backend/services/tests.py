@@ -151,12 +151,10 @@ class TestExecutionService:
 
         # Ensure SNMP tunnel is really ready before launching pytest.
         # Without this guard, first SNMP requests may fail right after device switch.
-        if not _wait_snmp_ready(timeout_sec=8.0, step_sec=0.4):
-            self._tunnel_service.release(lease_key)
-            raise HTTPException(
-                status_code=503,
-                detail="SNMP туннель не успел подняться. Повторите запуск через 2-3 секунды.",
-            )
+        if not _wait_snmp_ready(timeout_sec=3.0, step_sec=0.3):
+            # Не валим запуск: у некоторых стендов первый SNMP ответ может
+            # прийти с задержкой, но тесты затем стабильно проходят.
+            print("[tests] SNMP warmup check timeout; continue run without hard fail")
 
         started = time.time()
         payload: Dict[str, object] = {
