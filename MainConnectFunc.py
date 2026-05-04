@@ -4,6 +4,7 @@ import os
 import subprocess
 import time
 import threading
+from pathlib import Path
 import paramiko
 import re
 import sys
@@ -21,6 +22,22 @@ def _config_path() -> str:
 def _read_config() -> dict:
     with open(_config_path(), "r", encoding="utf-8") as jsonblock:
         return json.load(jsonblock)
+
+
+def _sync_device_context_if_needed(data: dict) -> None:
+    try:
+        if _config_path() != DEFAULT_CONFIG_PATH:
+            return
+        current = data.get("CurrentEQ") or {}
+        ip = str(current.get("ipaddr") or "").strip()
+        if not ip:
+            return
+        safe = "".join(ch if ch.isalnum() or ch in ("-", "_", ".") else "_" for ch in ip)
+        ctx_dir = Path(DEFAULT_CONFIG_PATH).resolve().parent / "device_contexts"
+        ctx_dir.mkdir(parents=True, exist_ok=True)
+        (ctx_dir / f"{safe}.json").write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
 
 
 def oids():
@@ -90,6 +107,7 @@ async def json_input(key_path, new_value):
         # Пишем
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
+        _sync_device_context_if_needed(data)
 
 
 def run_tunnel(ip, password):

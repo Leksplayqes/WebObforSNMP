@@ -450,10 +450,15 @@ class TestExecutionService:
 
 def _generate_job_id() -> str:
     import json
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\ui_state.json", 'r',
-              encoding='utf-8') as js:
-        data = json.load(js)
-    return f"{datetime.datetime.now().strftime("%d-%m-%Y %H-%M")} - {data["test_type_radio"]} tests"
+    try:
+        with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\ui_state.json", 'r',
+                  encoding='utf-8') as js:
+            data = json.load(js)
+    except Exception:
+        data = {}
+    test_type = str(data.get("test_type_radio") or "tests")
+    ts = datetime.datetime.now().strftime("%d-%m-%Y %H-%M")
+    return f"{ts} - {test_type} tests"
 
 
 def _norm_nodeid(node_id: str) -> str:
