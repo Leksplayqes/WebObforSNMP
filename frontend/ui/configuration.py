@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 from backend.device import upgrade_firmware_img, upgrade_firmware_block, upgrade_state
 from api import BackendApiClient, BackendApiError, normalise_nodeids
-from MainConnectFunc import oids, json_input, oidsSNMP, ssh_exec_commands
+from MainConnectFunc import oids, json_input, json_input_sync, oidsSNMP, ssh_exec_commands
 from state import on_change, save_state, viavi_sync_from_widgets, on_slot_change
 from device_upgrade.slot_update import block_update_by_dev
 
@@ -510,13 +510,13 @@ def render_wiring_configuration() -> None:
                 cfg.setdefault("VIAVIcontrol", {})
                 cfg["VIAVIcontrol"]["wiring"] = st.session_state["wiring"]
             save_state()
-            asyncio.run((json_input(_device_scope_path() + ["VIAVIcontrol", 'wiring'],
-                                    new_value=st.session_state["wiring"])))
+            json_input_sync(_device_scope_path() + ["VIAVIcontrol", 'wiring'],
+                            new_value=st.session_state["wiring"])
             _flash("Привязки сохранены.", "success")
     with b:
         if st.button("🧹 Очистить привязки", width='stretch'):
             st.session_state["wiring"] = []
-            asyncio.run(json_input(_device_scope_path() + ["VIAVIcontrol", 'wiring'], new_value=[]))
+            json_input_sync(_device_scope_path() + ["VIAVIcontrol", 'wiring'], new_value=[])
             save_state()
 
     if errors:

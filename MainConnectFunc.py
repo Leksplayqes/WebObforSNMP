@@ -46,7 +46,7 @@ def oidsVIAVI():
 file_lock = threading.RLock()
 
 
-async def json_input(key_path, new_value):
+def _json_input_impl(key_path, new_value):
     with file_lock:
         filename = 'OIDstatusNEW.json'
 
@@ -67,6 +67,14 @@ async def json_input(key_path, new_value):
         # Пишем
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
+
+
+async def json_input(key_path, new_value):
+    _json_input_impl(key_path, new_value)
+
+
+def json_input_sync(key_path, new_value):
+    _json_input_impl(key_path, new_value)
 
 
 def run_tunnel(ip, password):
