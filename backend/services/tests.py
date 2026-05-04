@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime
+import asyncio
 import os
 import re
 import sys
@@ -147,6 +148,15 @@ class TestExecutionService:
         except Exception:
             # Do not block run startup if compatibility sync fails.
             pass
+
+        # Ensure SNMP tunnel is really ready before launching pytest.
+        # Without this guard, first SNMP requests may fail right after device switch.
+        if not _wait_snmp_ready(timeout_sec=8.0, step_sec=0.4):
+            self._tunnel_service.release(lease_key)
+            raise HTTPException(
+                status_code=503,
+                detail="SNMP туннель не успел подняться. Повторите запуск через 2-3 секунды.",
+            )
 
         started = time.time()
         payload: Dict[str, object] = {
@@ -439,6 +449,25 @@ def _generate_job_id() -> str:
 
 def _norm_nodeid(node_id: str) -> str:
     return node_id.replace(" ::", "::").replace(":: ", "::").replace(" / ", "/").strip()
+
+
+def _wait_snmp_ready(timeout_sec: float = 8.0, step_sec: float = 0.4) -> bool:
+    """
+    Wait until basic SNMP GET succeeds through current tunnel/context.
+    """
+    from MainConnectFunc import snmp_get
+
+    deadline = time.time() + max(0.1, timeout_sec)
+    oid_sysdescr = "1.3.6.1.2.1.1.1.0"
+    while time.time() < deadline:
+        try:
+            result = asyncio.run(snmp_get(oid_sysdescr))
+            if result is not None and str(result) != "":
+                return True
+        except Exception:
+            pass
+        time.sleep(max(0.05, step_sec))
+    return False
 
 
 def _extract_devices(request: TestsRunRequest, cfg: Dict[str, object]) -> List[Dict[str, str]]:
