@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 from backend.device import upgrade_firmware_img, upgrade_firmware_block, upgrade_state
 from api import BackendApiClient, BackendApiError, normalise_nodeids
-from MainConnectFunc import oids, json_input, oidsSNMP, ssh_exec_commands
+from MainConnectFunc import oids, json_input, json_input_sync, oidsSNMP, ssh_exec_commands
 from state import on_change, save_state, viavi_sync_from_widgets, on_slot_change
 from device_upgrade.slot_update import block_update_by_dev
 
@@ -125,6 +125,20 @@ def _parse_slotlabel(label: str) -> Tuple[str, str]:
         return s, ""
     slot, iface = s.split("-", 1)
     return _trim(slot), _trim(iface)
+
+
+def _device_scope_path() -> List[str]:
+    ip = _trim(st.session_state.get("ip_address_input", ""))
+    if ip:
+        return ["Devices", ip]
+    return ["CurrentEQ"]
+
+
+def _known_device_options() -> List[str]:
+    devices = st.session_state.get("known_devices") or {}
+    if not isinstance(devices, dict):
+        return []
+    return sorted([ip for ip in devices.keys() if _trim(ip)])
 
 
 def _get_quant_port_map() -> Dict[str, int]:
@@ -330,7 +344,13 @@ def render_wiring_configuration() -> None:
     st.subheader("Привязка портов (VIAVI ↔ DEV)")
     if "wiring" not in st.session_state:
         cfg = st.session_state.get("config") or {}
-        persisted = (cfg.get("VIAVIcontrol") or {}).get("wiring", [])
+        base = _device_scope_path()
+        persisted = cfg
+        for key in base + ["VIAVIcontrol", "wiring"]:
+            if not isinstance(persisted, dict):
+                persisted = []
+                break
+            persisted = persisted.get(key, [])
         st.session_state["wiring"] = _migrate_wiring_rows_to_dev(list(persisted) if persisted else [])
     else:
         st.session_state["wiring"] = _migrate_wiring_rows_to_dev(st.session_state.get("wiring") or [])
@@ -497,12 +517,13 @@ def render_wiring_configuration() -> None:
                 cfg.setdefault("VIAVIcontrol", {})
                 cfg["VIAVIcontrol"]["wiring"] = st.session_state["wiring"]
             save_state()
-            asyncio.run((json_input(["VIAVIcontrol", 'wiring'], new_value=st.session_state["wiring"])))
+            json_input_sync(_device_scope_path() + ["VIAVIcontrol", 'wiring'],
+                            new_value=st.session_state["wiring"])
             _flash("Привязки сохранены.", "success")
     with b:
         if st.button("🧹 Очистить привязки", width='stretch'):
             st.session_state["wiring"] = []
-            asyncio.run(json_input(["VIAVIcontrol", 'wiring'], new_value=[]))
+            json_input_sync(_device_scope_path() + ["VIAVIcontrol", 'wiring'], new_value=[])
             save_state()
 
     if errors:
@@ -548,6 +569,22 @@ def render_configuration(client: BackendApiClient) -> None:
 
     with col1:
         st.subheader("Основные настройки")
+
+        device_options = _known_device_options()
+        if device_options:
+            selected_known = st.selectbox(
+                "**Сохранённые устройства**",
+                options=[""] + device_options,
+                key="selected_known_device_ip",
+                help="Выберите устройство для запуска теста без переопределения CurrentEQ.",
+            )
+            if selected_known:
+                known = (st.session_state.get("known_devices") or {}).get(selected_known, {}) or {}
+                st.session_state["ip_address_input"] = selected_known
+                if known.get("pass"):
+                    st.session_state["password_input"] = known.get("pass")
+                if known:
+                    st.session_state["device_info"] = known
 
         device = st.session_state.get("device_info") or {}
         ip_default = device.get("ipaddr") or st.session_state.get("ip_address_input", "")
@@ -624,6 +661,11 @@ def render_configuration(client: BackendApiClient) -> None:
                 "selected_tests": nodeids,
                 "settings": {
                     "target_device_ip": _trim(ip),
+                    "devices": [{
+                        "name": _trim((st.session_state.get("device_info") or {}).get("name", "")) or f"device-{_trim(ip)}",
+                        "ipaddr": _trim(ip),
+                        "password": _trim(pw) if pw else _trim(st.session_state.get("password_input", "")),
+                    }],
                 },
             }
 

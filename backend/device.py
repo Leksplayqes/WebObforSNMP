@@ -53,6 +53,7 @@ def _save_device_to_registry(data: Dict[str, Any], req: DeviceInfoRequest) -> No
         "name": current.get("name") or "",
         "ipaddr": ip,
         "pass": req.password or "",
+        "snmp_port": current.get("snmp_port") or "",
         "slots_dict": current.get("slots_dict") or {},
         "loopback": current.get("loopback") or {},
         "snmp_type": current.get("snmp_type") or "",

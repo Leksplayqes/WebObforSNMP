@@ -6,7 +6,7 @@ import json
 from typing import Any, Dict, List
 
 import streamlit as st
-from MainConnectFunc import json_input
+from MainConnectFunc import json_input_sync, json_input
 from frontend.constants import DEFAULT_API_BASE_URL, STATE_FILE
 
 
@@ -29,6 +29,8 @@ def initialize_session_state() -> None:
     """Populate frequently used keys in :mod:`streamlit.session_state`."""
     st.session_state.setdefault("api_base_url", DEFAULT_API_BASE_URL)
     st.session_state.setdefault("device_info", None)
+    st.session_state.setdefault("known_devices", {})
+    st.session_state.setdefault("selected_known_device_ip", "")
     st.session_state.setdefault("ip_address_input", "")
     st.session_state.setdefault("password_input", "")
     st.session_state.setdefault("snmp_type_select", "SnmpV2")
@@ -51,9 +53,22 @@ def load_state() -> Dict[str, Any]:
     return {}
 
 
+def _device_scope_path() -> List[str]:
+    """
+    Return JSON path for per-device settings.
+    Falls back to CurrentEQ when IP is unknown to preserve compatibility.
+    """
+    ip = (st.session_state.get("ip_address_input") or "").strip()
+    if ip:
+        return ["Devices", ip]
+    return ["CurrentEQ"]
+
+
 def save_state() -> None:
-    asyncio.run(json_input(["CurrentEQ", "loopback", "slot"], st.session_state.get("slot_loopback", "")))
-    asyncio.run(json_input(["CurrentEQ", "loopback", "port"], st.session_state.get("port_loopback", "")))
+    base = _device_scope_path()
+    json_input_sync(base + ["loopback", "slot"], st.session_state.get("slot_loopback", ""))
+    json_input_sync(base + ["loopback", "port"], st.session_state.get("port_loopback", ""))
+    json_input_sync(base + ["wiring"], st.session_state.get("wiring", []))
     state = {
         "api_base_url": st.session_state.get("api_base_url", DEFAULT_API_BASE_URL),
         "device_info": st.session_state.get("device_info"),
@@ -85,7 +100,8 @@ def on_slot_change():
         for slot_id, slot_name in slots.items()
         if st.session_state.get(f"chk_{slot_id}")}
     save_state()
-    asyncio.run(json_input(["CurrentEQ", 'active_slots'], new_value=st.session_state["active_slots"]))
+    base = _device_scope_path()
+    json_input_sync(base + ['active_slots'], new_value=st.session_state["active_slots"])
 
 
 def apply_state() -> None:
@@ -217,6 +233,7 @@ def viavi_sync_from_widgets() -> None:
     count = st.session_state.get("viavi_count", 1)
     num_map = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five"}
 
+    base = _device_scope_path()
     for i in range(1, count + 1):
         suffix = num_map.get(i, str(i))
         key_name = f"Num{suffix}"
@@ -227,10 +244,10 @@ def viavi_sync_from_widgets() -> None:
                 "Port2": st.session_state.get(f"viavi{i}_port2", ""),
             }
         }
-        asyncio.run(json_input(["VIAVIcontrol", "settings", key_name, "ipaddr"], viavi[key_name]["ipaddr"]))
-        asyncio.run(json_input(["VIAVIcontrol", "settings", key_name, "typeofport", "Port1"],
-                               viavi[key_name]["typeofport"]["Port1"]))
-        asyncio.run(json_input(["VIAVIcontrol", "settings", key_name, "typeofport", "Port2"],
-                               viavi[key_name]["typeofport"]["Port2"]))
+        json_input_sync(base + ["VIAVIcontrol", "settings", key_name, "ipaddr"], viavi[key_name]["ipaddr"])
+        json_input_sync(base + ["VIAVIcontrol", "settings", key_name, "typeofport", "Port1"],
+                        viavi[key_name]["typeofport"]["Port1"])
+        json_input_sync(base + ["VIAVIcontrol", "settings", key_name, "typeofport", "Port2"],
+                        viavi[key_name]["typeofport"]["Port2"])
     st.session_state["viavi_config"] = viavi
     save_state()
