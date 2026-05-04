@@ -145,6 +145,7 @@ class TestExecutionService:
             if reg_item.get("active_slots"):
                 json_set(["CurrentEQ", "active_slots"], reg_item.get("active_slots"))
             json_set(["CurrentEQ", "snmp_port"], int(lease.port))
+            json_set(["Devices", ip, "snmp_port"], int(lease.port))
         except Exception:
             # Do not block run startup if compatibility sync fails.
             pass
