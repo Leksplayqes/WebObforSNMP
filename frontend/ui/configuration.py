@@ -127,6 +127,13 @@ def _parse_slotlabel(label: str) -> Tuple[str, str]:
     return _trim(slot), _trim(iface)
 
 
+def _device_scope_path() -> List[str]:
+    ip = _trim(st.session_state.get("ip_address_input", ""))
+    if ip:
+        return ["Devices", ip]
+    return ["CurrentEQ"]
+
+
 def _get_quant_port_map() -> Dict[str, int]:
     try:
         data = oids()["blockOID"]
@@ -330,7 +337,13 @@ def render_wiring_configuration() -> None:
     st.subheader("Привязка портов (VIAVI ↔ DEV)")
     if "wiring" not in st.session_state:
         cfg = st.session_state.get("config") or {}
-        persisted = (cfg.get("VIAVIcontrol") or {}).get("wiring", [])
+        base = _device_scope_path()
+        persisted = cfg
+        for key in base + ["VIAVIcontrol", "wiring"]:
+            if not isinstance(persisted, dict):
+                persisted = []
+                break
+            persisted = persisted.get(key, [])
         st.session_state["wiring"] = _migrate_wiring_rows_to_dev(list(persisted) if persisted else [])
     else:
         st.session_state["wiring"] = _migrate_wiring_rows_to_dev(st.session_state.get("wiring") or [])
@@ -497,12 +510,13 @@ def render_wiring_configuration() -> None:
                 cfg.setdefault("VIAVIcontrol", {})
                 cfg["VIAVIcontrol"]["wiring"] = st.session_state["wiring"]
             save_state()
-            asyncio.run((json_input(["VIAVIcontrol", 'wiring'], new_value=st.session_state["wiring"])))
+            asyncio.run((json_input(_device_scope_path() + ["VIAVIcontrol", 'wiring'],
+                                    new_value=st.session_state["wiring"])))
             _flash("Привязки сохранены.", "success")
     with b:
         if st.button("🧹 Очистить привязки", width='stretch'):
             st.session_state["wiring"] = []
-            asyncio.run(json_input(["VIAVIcontrol", 'wiring'], new_value=[]))
+            asyncio.run(json_input(_device_scope_path() + ["VIAVIcontrol", 'wiring'], new_value=[]))
             save_state()
 
     if errors:

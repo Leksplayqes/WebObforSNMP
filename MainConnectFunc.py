@@ -2,6 +2,7 @@ import asyncio
 import json
 import subprocess
 import time
+import threading
 import paramiko
 import re
 import sys
@@ -42,11 +43,11 @@ def oidsVIAVI():
         return oidsVIAVI
 
 
-file_lock = asyncio.Lock()
+file_lock = threading.RLock()
 
 
 async def json_input(key_path, new_value):
-    async with file_lock:
+    with file_lock:
         filename = 'OIDstatusNEW.json'
 
         # Читаем
@@ -57,6 +58,8 @@ async def json_input(key_path, new_value):
         current = data
         for i, key in enumerate(key_path):
             if i < len(key_path) - 1:
+                if key not in current or not isinstance(current.get(key), dict):
+                    current[key] = {}
                 current = current[key]
             else:
                 current[key] = new_value
