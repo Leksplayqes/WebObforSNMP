@@ -29,6 +29,8 @@ def initialize_session_state() -> None:
     """Populate frequently used keys in :mod:`streamlit.session_state`."""
     st.session_state.setdefault("api_base_url", DEFAULT_API_BASE_URL)
     st.session_state.setdefault("device_info", None)
+    st.session_state.setdefault("known_devices", {})
+    st.session_state.setdefault("selected_known_device_ip", "")
     st.session_state.setdefault("ip_address_input", "")
     st.session_state.setdefault("password_input", "")
     st.session_state.setdefault("snmp_type_select", "SnmpV2")

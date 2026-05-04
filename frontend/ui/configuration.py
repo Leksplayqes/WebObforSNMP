@@ -134,6 +134,13 @@ def _device_scope_path() -> List[str]:
     return ["CurrentEQ"]
 
 
+def _known_device_options() -> List[str]:
+    devices = st.session_state.get("known_devices") or {}
+    if not isinstance(devices, dict):
+        return []
+    return sorted([ip for ip in devices.keys() if _trim(ip)])
+
+
 def _get_quant_port_map() -> Dict[str, int]:
     try:
         data = oids()["blockOID"]
@@ -563,6 +570,22 @@ def render_configuration(client: BackendApiClient) -> None:
     with col1:
         st.subheader("Основные настройки")
 
+        device_options = _known_device_options()
+        if device_options:
+            selected_known = st.selectbox(
+                "**Сохранённые устройства**",
+                options=[""] + device_options,
+                key="selected_known_device_ip",
+                help="Выберите устройство для запуска теста без переопределения CurrentEQ.",
+            )
+            if selected_known:
+                known = (st.session_state.get("known_devices") or {}).get(selected_known, {}) or {}
+                st.session_state["ip_address_input"] = selected_known
+                if known.get("pass"):
+                    st.session_state["password_input"] = known.get("pass")
+                if known:
+                    st.session_state["device_info"] = known
+
         device = st.session_state.get("device_info") or {}
         ip_default = device.get("ipaddr") or st.session_state.get("ip_address_input", "")
         ip = st.text_input(
@@ -638,6 +661,11 @@ def render_configuration(client: BackendApiClient) -> None:
                 "selected_tests": nodeids,
                 "settings": {
                     "target_device_ip": _trim(ip),
+                    "devices": [{
+                        "name": _trim((st.session_state.get("device_info") or {}).get("name", "")) or f"device-{_trim(ip)}",
+                        "ipaddr": _trim(ip),
+                        "password": _trim(pw) if pw else _trim(st.session_state.get("password_input", "")),
+                    }],
                 },
             }
 
