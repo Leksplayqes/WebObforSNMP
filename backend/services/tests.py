@@ -14,7 +14,7 @@ from typing import Dict, Iterable, List, Optional
 from fastapi import BackgroundTasks, HTTPException
 import streamlit as st
 from shared.catalogs import ALARM_TESTS_CATALOG, SYNC_TESTS_CATALOG, STAT_TEST_CATALOG, COMM_TEST_CATALOG, OTHER_TEST_CATALOG
-from ..config import PROJECT_ROOT, REPORT_DIR, ensure_config
+from ..config import PROJECT_ROOT, REPORT_DIR, ensure_config, json_set
 from ..jobs import job_path, load_jobs_on_startup, save_job
 from backend.services.models import TestsRunRequest
 from ..result_repository import ResultRecord, ResultRepository
@@ -122,6 +122,31 @@ class TestExecutionService:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         except TunnelManagerError as exc:
             raise HTTPException(status_code=500, detail=f"Ошибка подготовки туннеля: {exc}") from exc
+
+        # Legacy test code still reads runtime target from CurrentEQ.
+        # Synchronize CurrentEQ with the selected device and active tunnel port
+        # at launch time, so switching saved devices does not require extra
+        # "Проверить подключение" clicks before each run.
+        try:
+            cfg = ensure_config()
+            registry = (cfg.get("Devices") or {}) if isinstance(cfg, dict) else {}
+            reg_item = registry.get(ip) if isinstance(registry, dict) else {}
+            if not isinstance(reg_item, dict):
+                reg_item = {}
+            json_set(["CurrentEQ", "ipaddr"], ip)
+            json_set(["CurrentEQ", "pass"], password)
+            if reg_item.get("name"):
+                json_set(["CurrentEQ", "name"], reg_item.get("name"))
+            if reg_item.get("slots_dict"):
+                json_set(["CurrentEQ", "slots_dict"], reg_item.get("slots_dict"))
+            if reg_item.get("loopback"):
+                json_set(["CurrentEQ", "loopback"], reg_item.get("loopback"))
+            if reg_item.get("active_slots"):
+                json_set(["CurrentEQ", "active_slots"], reg_item.get("active_slots"))
+            json_set(["CurrentEQ", "snmp_port"], int(lease.port))
+        except Exception:
+            # Do not block run startup if compatibility sync fails.
+            pass
 
         started = time.time()
         payload: Dict[str, object] = {
