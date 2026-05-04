@@ -251,14 +251,14 @@ class TestExecutionService:
             return
 
         payload = record.payload
-        device_ctx = (payload.get("device") or {}) if isinstance(payload, dict) else {}
         snapshot_ctx = (payload.get("current_eq_snapshot") or {}) if isinstance(payload, dict) else {}
-        if isinstance(device_ctx, dict):
+        if isinstance(snapshot_ctx, dict) and snapshot_ctx:
             try:
                 json_set(["CurrentEQ"], {
-                    "name": str(device_ctx.get("name") or ""),
-                    "ipaddr": str(device_ctx.get("ipaddr") or ""),
-                    "pass": str(device_ctx.get("password") or device_ctx.get("pass") or ""),
+                    **snapshot_ctx,
+                    "name": str(snapshot_ctx.get("name") or ""),
+                    "ipaddr": str(snapshot_ctx.get("ipaddr") or ""),
+                    "pass": str(snapshot_ctx.get("pass") or snapshot_ctx.get("password") or ""),
                 })
             except Exception as exc:
                 payload["stderr"] = (payload.get("stderr") or "") + f"\n[WARN] failed to set CurrentEQ for job: {exc}\n"
