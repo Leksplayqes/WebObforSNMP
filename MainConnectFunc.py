@@ -19,12 +19,37 @@ except ImportError:  # optional dependency
 JSON_DB_PATH = Path("OIDstatusNEW.json")
 YAML_DB_PATH = Path("OIDstatusNEW.yaml")
 CURRENT_EQ_YAML_PATH = Path("CurrentEQ.yaml")
+JOB_CONTEXT_ENV_NAMES = ("OIDSTATUS_TEST_CONTEXT", "OIDSTATUS_CONTEXT_FILE")
+
+
+def _job_context_path():
+    """Return an optional per-job configuration file used by pytest workers.
+
+    The legacy tests call oids()/oidsSNMP() and json_input(), which historically
+    read and wrote the global OIDstatusNEW.json -> CurrentEQ. Parallel pytest jobs
+    cannot share that mutable CurrentEQ safely. When the backend starts a job it
+    passes a job-specific JSON snapshot through the environment; all reads and
+    writes in this process are then redirected to that snapshot.
+    """
+    for env_name in JOB_CONTEXT_ENV_NAMES:
+        raw = os.getenv(env_name)
+        if raw:
+            return Path(raw)
+    return None
+
+
+def _load_json_file(path):
+    with open(path, "r", encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 def _load_db():
-    if YAML_DB_PATH.exists() and yaml is not None:
-        with open(YAML_DB_PATH, "r", encoding="utf-8") as fh:
-            return yaml.safe_load(fh) or {}
+    context_path = _job_context_path()
+    if context_path is not None and context_path.exists():
+        context_data = _load_json_file(context_path)
+        if isinstance(context_data, dict) and "CurrentEQ" in context_data:
+            return context_data
+
     with open(JSON_DB_PATH, "r", encoding="utf-8") as fh:
         return json.load(fh)
 
@@ -79,6 +104,13 @@ def _load_current_eq_profiles():
 
 
 def _write_db(data):
+    context_path = _job_context_path()
+    if context_path is not None:
+        context_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(context_path, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=4, ensure_ascii=False)
+        return
+
     with open(JSON_DB_PATH, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=4, ensure_ascii=False)
     current_eq = _normalise_current_eq_profile(data.get("CurrentEQ", {}) or {})
