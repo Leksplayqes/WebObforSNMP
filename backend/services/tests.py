@@ -1,7 +1,9 @@
 """Service layer encapsulating pytest job orchestration."""
 from __future__ import annotations
 
+import copy
 import datetime
+import json
 import os
 import re
 import sys
@@ -10,9 +12,8 @@ from functools import lru_cache
 from pathlib import Path
 from subprocess import PIPE, STDOUT, Popen
 from threading import RLock
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List
 from fastapi import BackgroundTasks, HTTPException
-import streamlit as st
 from shared.catalogs import ALARM_TESTS_CATALOG, SYNC_TESTS_CATALOG, STAT_TEST_CATALOG, COMM_TEST_CATALOG, OTHER_TEST_CATALOG
 from ..config import PROJECT_ROOT, REPORT_DIR, ensure_config
 from ..jobs import job_path, load_jobs_on_startup, save_job
@@ -29,6 +30,8 @@ from .tunnels import (
 )
 
 DEFAULT_API_BASE_URL = "http://192.168.72.55:8000"
+JOB_CONTEXT_DIR = REPORT_DIR / "contexts"
+JOB_CONTEXT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class TestExecutionService:
@@ -67,20 +70,25 @@ class TestExecutionService:
 
     # ------------------------------------------------------------------
     def run(self, request: TestsRunRequest, background_tasks: BackgroundTasks) -> Dict[str, object]:
-        job_id = _generate_job_id()
+        job_id = _generate_job_id(request.test_type)
         nodeids = [_norm_nodeid(x) for x in (request.selected_tests or []) if x.strip()]
         if not nodeids:
             raise HTTPException(status_code=400, detail="Не выбраны тесты для запуска")
 
-        devices = _extract_devices(request, ensure_config())
+        cfg = ensure_config()
+        devices = _extract_devices(request, cfg)
         if not devices:
             raise HTTPException(
                 status_code=400,
-                detail="Не настроены устройства для запуска тестов: передайте settings.devices или заполните CurrentEQ",
+                detail="Не настроены устройства для запуска тестов: передайте settings.device или settings.devices",
             )
         selected_device = devices[0]
         ip = selected_device.get("ipaddr") or ""
-        password = selected_device.get("password") or ""
+        password = selected_device.get("pass") or selected_device.get("password") or ""
+
+        job_context = _build_job_context(cfg, selected_device)
+        context_path = JOB_CONTEXT_DIR / f"{_safe_filename(job_id)}.json"
+        _write_job_context(context_path, job_context)
 
         name_by_nodeid = {**{v: k for k, v in SYNC_TESTS_CATALOG.items()},
                           **{v: k for k, v in ALARM_TESTS_CATALOG.items()},
@@ -91,20 +99,15 @@ class TestExecutionService:
                               **{v: "Коммутация" for v in COMM_TEST_CATALOG.values()}}
         names = [name_by_nodeid.get(n, n) for n in nodeids]
         categories = {category_by_nodeid.get(n) for n in nodeids if category_by_nodeid.get(n)}
-        # Determine category label
         category_label = ""
         if len(categories) == 1:
             category_label = categories.pop()
         elif len(categories) > 1:
             category_label = " и ".join(sorted(categories))
-        # Form title string
         if len(names) == 1:
             title = f"{category_label}: {names[0]}"
         else:
-            if category_label:
-                title = f"{len(names)} тестов: {category_label}: {', '.join(names)}"
-            else:
-                title = f"{len(names)} тестов: {', '.join(names)}"
+            title = f"{len(names)} тестов: {category_label}: {', '.join(names)}" if category_label else f"{len(names)} тестов: {', '.join(names)}"
         lease_key = self._lease_key(job_id)
         try:
             lease = self._tunnel_service.reserve(
@@ -145,6 +148,7 @@ class TestExecutionService:
             "lease_port": lease.port,
             "device": selected_device,
             "devices": devices,
+            "context_path": str(context_path),
             "title": title,
         }
         try:
@@ -201,9 +205,6 @@ class TestExecutionService:
         finally:
             with self._lock:
                 self._running_procs.pop(job_id, None)
-
-            # If the trap listener was started for this job, stop it as well.
-            # (Safe to call multiple times; manager returns not_running if already stopped.)
             trap_info = (job.get("trap") or {}) if isinstance(job, dict) else {}
             if trap_info.get("started_by_job"):
                 stop_trap_listener()
@@ -233,7 +234,8 @@ class TestExecutionService:
 
         payload = record.payload
         payload["expected_total"] = None
-        report_path = str(self._report_dir / f"{job_id}.xml")
+        report_path = str(self._report_dir / f"{_safe_filename(job_id)}.xml")
+        context_path = payload.get("context_path")
         self._results.update(job_id, payload=payload)
         save_job(job_id, self._results)
 
@@ -248,9 +250,14 @@ class TestExecutionService:
             f"--junitxml={report_path}",
             *nodeids,
         ]
+        env = os.environ.copy()
+        if context_path:
+            env["OIDSTATUS_TEST_CONTEXT"] = str(context_path)
+            env["OIDSTATUS_CONTEXT_FILE"] = str(context_path)
         proc = Popen(
             cmd,
             cwd=str(self._project_root),
+            env=env,
             text=True,
             stdout=PIPE,
             stderr=STDOUT,
@@ -281,7 +288,6 @@ class TestExecutionService:
         self._results.update(job_id, status="running", payload=payload)
         save_job(job_id, self._results)
 
-        # ----------------- ВАЖНО: запускаем pytest с trap listener на время выполнения -----------------
         with trap_listener_context() as (trap_started_by_job, trap_start_result):
             payload["trap"] = {
                 "enabled": True,
@@ -316,12 +322,7 @@ class TestExecutionService:
                             cases_map[nodeid] = case
                             payload["cases"] = list(cases_map.values())
                             payload["summary"] = _recalc_summary(payload["cases"], finished=False)
-                            state = "running"
-                            self._results.update(
-                                job_id,
-                                status=state,
-                                payload=payload,
-                            )
+                            self._results.update(job_id, status="running", payload=payload)
                             save_job(job_id, self._results)
                 proc.wait()
                 payload["returncode"] = proc.returncode
@@ -360,12 +361,7 @@ class TestExecutionService:
                             "duration": 0.0,
                             "message": "pytest did not produce junit xml; check stdout/stderr",
                         }
-                        self._results.update(
-                            job_id,
-                            status="failed",
-                            payload=payload,
-                            finished_at=payload.get("finished"),
-                        )
+                        self._results.update(job_id, status="failed", payload=payload, finished_at=payload.get("finished"))
                         save_job(job_id, self._results)
                 except Exception as exc:
                     payload["summary"] = {
@@ -377,12 +373,7 @@ class TestExecutionService:
                         "duration": 0.0,
                         "message": f"junit merge failed: {exc}",
                     }
-                    self._results.update(
-                        job_id,
-                        status="failed",
-                        payload=payload,
-                        finished_at=payload.get("finished"),
-                    )
+                    self._results.update(job_id, status="failed", payload=payload, finished_at=payload.get("finished"))
                     save_job(job_id, self._results)
             finally:
                 with self._lock:
@@ -390,18 +381,13 @@ class TestExecutionService:
                 self._tunnel_service.release(self._lease_key(job_id))
                 if payload.get("finished") is None:
                     payload["finished"] = time.time()
-                    self._results.update(
-                        job_id,
-                        payload=payload,
-                        finished_at=payload["finished"],
-                    )
+                    self._results.update(job_id, payload=payload, finished_at=payload["finished"])
                 save_job(job_id, self._results)
-
-    # Public accessors -------------------------------------------------
 
     @property
     def results(self) -> ResultRepository:
         return self._results
+
 
 
 def _generate_job_id() -> str:
@@ -412,52 +398,105 @@ def _generate_job_id() -> str:
     return f"{datetime.datetime.now():%d-%m-%Y %H-%M-%S} - {data['test_type_radio']} tests"
 
 
+def _generate_job_id(test_type: str = "tests") -> str:
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    safe_type = _safe_filename(test_type or "tests")
+    return f"{stamp}-{safe_type}"
+
+
+def _safe_filename(value: str) -> str:
+    safe = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(value or "job")).strip("_")
+    return safe or "job"
+
+
+def _write_job_context(path: Path, data: Dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = Path(str(path) + ".tmp")
+    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(path)
+
+
+def _normalise_snmp_type(value: Any) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return "SnmpV2"
+    key = raw.lower().replace("_", "").replace("-", "")
+    if key in {"snmpv3", "snmp3", "v3"} or key.endswith("v3") or key.endswith("3"):
+        return "SnmpV3"
+    if key in {"snmpv2", "snmpv2c", "snmp2", "v2", "v2c"} or key.endswith("v2") or key.endswith("2"):
+        return "SnmpV2"
+    return raw
+
+
+def _normalise_device_profile(item: Dict[str, Any], fallback_name: str = "target") -> Dict[str, Any]:
+    profile = copy.deepcopy(item)
+    if "password" in profile and "pass" not in profile:
+        profile["pass"] = profile.get("password") or ""
+    if "pass" in profile and "password" not in profile:
+        profile["password"] = profile.get("pass") or ""
+    profile["ipaddr"] = str(profile.get("ipaddr") or profile.get("ip_address") or "").strip()
+    profile["name"] = str(profile.get("name") or fallback_name or "target")
+    profile["snmp_type"] = _normalise_snmp_type(profile.get("snmp_type"))
+    profile.setdefault("slots_dict", {})
+    profile.setdefault("loopback", {})
+    profile.setdefault("active_slots", {})
+    return profile
+
+
+def _build_job_context(cfg: Dict[str, Any], selected_device: Dict[str, Any]) -> Dict[str, Any]:
+    context = copy.deepcopy(cfg)
+    profile = _normalise_device_profile(selected_device)
+    context["CurrentEQ"] = profile
+    context.setdefault("Devices", {})
+    if profile.get("ipaddr"):
+        context["Devices"][profile["ipaddr"]] = copy.deepcopy(profile)
+    return context
+
 
 def _norm_nodeid(node_id: str) -> str:
     return node_id.replace(" ::", "::").replace(":: ", "::").replace(" / ", "/").strip()
 
 
-def _extract_devices(request: TestsRunRequest, cfg: Dict[str, object]) -> List[Dict[str, str]]:
-    devices: List[Dict[str, str]] = []
+def _extract_devices(request: TestsRunRequest, cfg: Dict[str, object]) -> List[Dict[str, Any]]:
+    devices: List[Dict[str, Any]] = []
     raw_settings = request.settings or {}
-    raw_devices = raw_settings.get("devices") if isinstance(raw_settings, dict) else None
+    if not isinstance(raw_settings, dict):
+        raw_settings = {}
+
+    raw_device = raw_settings.get("device")
+    if isinstance(raw_device, dict) and str(raw_device.get("ipaddr") or raw_device.get("ip_address") or "").strip():
+        return [_normalise_device_profile(raw_device)]
+
+    raw_devices = raw_settings.get("devices")
     if isinstance(raw_devices, list):
         for idx, item in enumerate(raw_devices):
             if not isinstance(item, dict):
                 continue
-            ip = str(item.get("ipaddr") or "").strip()
-            if not ip:
-                continue
-            devices.append(
-                {
-                    "name": str(item.get("name") or f"device-{idx + 1}").strip(),
-                    "ipaddr": ip,
-                    "password": str(item.get("password") or ""),
-                }
-            )
+            profile = _normalise_device_profile(item, fallback_name=f"device-{idx + 1}")
+            if profile.get("ipaddr"):
+                devices.append(profile)
     if devices:
         return devices
-    target_ip = ""
-    if isinstance(raw_settings, dict):
-        target_ip = str(raw_settings.get("target_device_ip") or "").strip()
-    registry = (cfg.get("Devices") or {}) if isinstance(cfg, dict) else {}
-    if target_ip and isinstance(registry, dict):
-        reg_item = registry.get(target_ip)
-        if isinstance(reg_item, dict) and str(reg_item.get("ipaddr") or "").strip():
-            return [{
-                "name": str(reg_item.get("name") or "target"),
-                "ipaddr": str(reg_item.get("ipaddr") or "").strip(),
-                "password": str(reg_item.get("pass") or reg_item.get("password") or ""),
-            }]
+
+    target_ip = str(raw_settings.get("target_device_ip") or "").strip()
+    registries = []
+    if isinstance(cfg, dict):
+        registries.extend([cfg.get("Devices"), cfg.get("devices")])
+    if target_ip:
+        for registry in registries:
+            if isinstance(registry, dict):
+                reg_item = registry.get(target_ip)
+                if isinstance(reg_item, dict):
+                    profile = _normalise_device_profile(reg_item)
+                    if profile.get("ipaddr"):
+                        return [profile]
+
     current = (cfg.get("CurrentEQ") or {}) if isinstance(cfg, dict) else {}
-    ip = str(current.get("ipaddr") or "").strip()
-    if not ip:
-        return []
-    return [{
-        "name": str(current.get("name") or "current"),
-        "ipaddr": ip,
-        "password": str(current.get("pass") or ""),
-    }]
+    if isinstance(current, dict):
+        profile = _normalise_device_profile(current, fallback_name="current")
+        if profile.get("ipaddr"):
+            return [profile]
+    return []
 
 
 def _recalc_summary(cases: Iterable[Dict[str, object]], finished: bool) -> Dict[str, object]:
