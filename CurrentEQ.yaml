@@ -20,7 +20,7 @@
         "slot": 8,
         "port": 2
       },
-      "snmp_type": "SNMPv3",
+      "snmp_type": "SnmpV3",
       "active_slots": {
         "6": "STM-16M"
       },
@@ -45,7 +45,7 @@
         "slot": 8,
         "port": 2
       },
-      "snmp_type": "SNMPv3",
+      "snmp_type": "SnmpV3",
       "active_slots": {
         "6": "STM-16M"
       },
@@ -54,17 +54,27 @@
     "192.168.72.70": {
       "name": "OSM-KMv3",
       "ipaddr": "192.168.72.70",
-      "pass": "",
-      "slots_dict": { },
+      "pass": "Qaz11111!",
+      "slots_dict": {
+        "3": "STM-1/4",
+        "6": "STM-16M",
+        "7": "Eth1000M",
+        "8": "STM-1/4",
+        "9": "KC-M12",
+        "10": "KC-M12",
+        "11": "STM-1/4",
+        "12": "STM-64M",
+        "13": "STM-64M"
+      },
       "loopback": {
         "slot": 8,
         "port": 2
       },
-      "snmp_type": "SNMPv3",
+      "snmp_type": "SnmpV3",
       "active_slots": {
         "6": "STM-16M"
       },
-      "snmp_port": 55431
+      "snmp_port": 63059
     }
   }
 }
