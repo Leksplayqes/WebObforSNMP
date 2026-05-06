@@ -55,7 +55,7 @@
       "name": "OSM-KMv3",
       "ipaddr": "192.168.72.70",
       "pass": "",
-      "slots_dict": {},
+      "slots_dict": { },
       "loopback": {
         "slot": 8,
         "port": 2
