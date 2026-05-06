@@ -32,7 +32,31 @@ def _load_db():
 def _write_db(data):
     with open(JSON_DB_PATH, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=4, ensure_ascii=False)
-    current_eq_payload = {"CurrentEQ": data.get("CurrentEQ", {})}
+    current_eq = data.get("CurrentEQ", {}) or {}
+    current_ip = str(current_eq.get("ipaddr", "") or "")
+
+    existing_profiles = {}
+    if CURRENT_EQ_YAML_PATH.exists():
+        try:
+            existing_profiles = json.loads(CURRENT_EQ_YAML_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            existing_profiles = {}
+
+    devices = existing_profiles.get("devices") if isinstance(existing_profiles, dict) else None
+    if not isinstance(devices, dict):
+        devices = {}
+    if current_ip:
+        devices[current_ip] = current_eq
+
+    selected_device_id = existing_profiles.get("selected_device_id", "") if isinstance(existing_profiles, dict) else ""
+    if current_ip:
+        selected_device_id = current_ip
+
+    current_eq_payload = {
+        "selected_device_id": selected_device_id,
+        "devices": devices,
+    }
+
     if yaml is not None:
         with open(YAML_DB_PATH, "w", encoding="utf-8") as fh:
             yaml.safe_dump(data, fh, allow_unicode=True, sort_keys=False)
