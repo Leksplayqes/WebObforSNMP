@@ -25,6 +25,60 @@ def _default_selected_tests_map() -> Dict[str, List[str]]:
     return {"alarm": [], "sync": [], "stat": [], "comm": [], "other": []}
 
 
+def _normalise_snmp_type(value: Any) -> str:
+    raw = "" if value is None else str(value).strip()
+    if not raw:
+        return "SnmpV2"
+    key = raw.lower().replace("_", "").replace("-", "")
+    if key in {"snmpv3", "snmp3", "v3"} or key.endswith("v3") or key.endswith("3"):
+        return "SnmpV3"
+    if key in {"snmpv2", "snmpv2c", "snmp2", "v2", "v2c"} or key.endswith("v2") or key.endswith("2"):
+        return "SnmpV2"
+    return raw
+
+
+def _sync_device_info_from_inputs() -> None:
+    """Do not let stale device_info override a just-loaded profile.
+
+    The configuration page uses device_info.ipaddr as the default for the IP
+    field. When a profile is loaded, ip_address_input is changed before the
+    next rerun, but device_info could still contain the previous device. This
+    keeps device_info aligned with the current form values without touching the
+    profile selectbox value.
+    """
+    device_info = st.session_state.get("device_info")
+    if not isinstance(device_info, dict):
+        return
+
+    ip = st.session_state.get("ip_address_input", "")
+    if ip is not None and str(ip).strip():
+        device_info["ipaddr"] = str(ip).strip()
+
+    snmp_type = st.session_state.get("snmp_type_select")
+    if snmp_type is not None:
+        device_info["snmp_type"] = _normalise_snmp_type(snmp_type)
+
+    password = st.session_state.get("password_input")
+    if password is not None:
+        device_info["pass"] = str(password)
+
+    loopback = device_info.get("loopback")
+    if not isinstance(loopback, dict):
+        loopback = {}
+    if st.session_state.get("slot_loopback") is not None:
+        loopback["slot"] = st.session_state.get("slot_loopback")
+    if st.session_state.get("port_loopback") is not None:
+        loopback["port"] = st.session_state.get("port_loopback")
+    if loopback:
+        device_info["loopback"] = loopback
+
+    active_slots = st.session_state.get("active_slots")
+    if isinstance(active_slots, dict):
+        device_info["active_slots"] = active_slots
+
+    st.session_state["device_info"] = device_info
+
+
 def initialize_session_state() -> None:
     """Populate frequently used keys in :mod:`streamlit.session_state`."""
     st.session_state.setdefault("api_base_url", DEFAULT_API_BASE_URL)
@@ -52,6 +106,7 @@ def load_state() -> Dict[str, Any]:
 
 
 def save_state() -> None:
+    _sync_device_info_from_inputs()
     asyncio.run(json_input(["CurrentEQ", "loopback", "slot"], st.session_state.get("slot_loopback", "")))
     asyncio.run(json_input(["CurrentEQ", "loopback", "port"], st.session_state.get("port_loopback", "")))
     state = {
