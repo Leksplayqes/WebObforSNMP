@@ -29,22 +29,79 @@ def _load_db():
         return json.load(fh)
 
 
+def _normalise_snmp_type(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    key = raw.lower().replace("_", "").replace("-", "")
+    if key in {"snmpv3", "snmp3", "v3"} or key.endswith("v3") or key.endswith("3"):
+        return "SnmpV3"
+    if key in {"snmpv2", "snmpv2c", "snmp2", "v2", "v2c"} or key.endswith("v2") or key.endswith("2"):
+        return "SnmpV2"
+    return raw
+
+
+def _normalise_current_eq_profile(profile):
+    if not isinstance(profile, dict):
+        return {}
+    out = dict(profile)
+    snmp_type = _normalise_snmp_type(out.get("snmp_type"))
+    if snmp_type:
+        out["snmp_type"] = snmp_type
+    return out
+
+
+def _load_current_eq_profiles():
+    if not CURRENT_EQ_YAML_PATH.exists():
+        return {}
+
+    try:
+        text = CURRENT_EQ_YAML_PATH.read_text(encoding="utf-8")
+    except Exception:
+        return {}
+
+    if not text.strip():
+        return {}
+
+    if yaml is not None:
+        try:
+            data = yaml.safe_load(text) or {}
+            if isinstance(data, dict):
+                return data
+        except Exception:
+            pass
+
+    try:
+        data = json.loads(text)
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 def _write_db(data):
     with open(JSON_DB_PATH, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=4, ensure_ascii=False)
-    current_eq = data.get("CurrentEQ", {}) or {}
-    current_ip = str(current_eq.get("ipaddr", "") or "")
+    current_eq = _normalise_current_eq_profile(data.get("CurrentEQ", {}) or {})
+    current_ip = str(current_eq.get("ipaddr", "") or "").strip()
 
-    existing_profiles = {}
-    if CURRENT_EQ_YAML_PATH.exists():
-        try:
-            existing_profiles = json.loads(CURRENT_EQ_YAML_PATH.read_text(encoding="utf-8"))
-        except Exception:
-            existing_profiles = {}
+    existing_profiles = _load_current_eq_profiles()
 
     devices = existing_profiles.get("devices") if isinstance(existing_profiles, dict) else None
     if not isinstance(devices, dict):
         devices = {}
+
+    legacy_current_eq = existing_profiles.get("CurrentEQ") if isinstance(existing_profiles, dict) else None
+    if isinstance(legacy_current_eq, dict):
+        legacy_profile = _normalise_current_eq_profile(legacy_current_eq)
+        legacy_ip = str(legacy_profile.get("ipaddr", "") or "").strip()
+        if legacy_ip and legacy_ip not in devices:
+            devices[legacy_ip] = legacy_profile
+
+    devices = {
+        str(device_id): _normalise_current_eq_profile(profile)
+        for device_id, profile in devices.items()
+        if isinstance(profile, dict)
+    }
     if current_ip:
         devices[current_ip] = current_eq
 
