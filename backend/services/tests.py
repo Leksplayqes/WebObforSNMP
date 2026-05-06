@@ -63,6 +63,16 @@ class TestExecutionService:
         cfg = ensure_config()
         devices = _extract_devices(request, cfg)
         if not devices:
+            settings = request.settings if isinstance(request.settings, dict) else {}
+            target_ip = str(settings.get("target_device_ip") or "").strip()
+            if target_ip:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"Профиль устройства {target_ip} не найден в Devices. "
+                        "Нажмите ‘Проверить подключение’ для выбранного профиля и запустите тесты снова."
+                    ),
+                )
             raise HTTPException(status_code=400, detail="Не настроены устройства для запуска тестов")
         selected_device = devices[0]
         ip = selected_device.get("ipaddr") or ""
@@ -255,6 +265,8 @@ def _norm_nodeid(node_id: str) -> str:
 
 def _extract_devices(request: TestsRunRequest, cfg: Dict[str, object]) -> List[Dict[str, Any]]:
     settings = request.settings if isinstance(request.settings, dict) else {}
+    target_ip = str(settings.get("target_device_ip") or "").strip()
+
     if isinstance(settings.get("device"), dict) and str(settings["device"].get("ipaddr") or settings["device"].get("ip_address") or "").strip():
         return [_normalise_device_profile(settings["device"])]
     if isinstance(settings.get("devices"), list):
@@ -262,12 +274,19 @@ def _extract_devices(request: TestsRunRequest, cfg: Dict[str, object]) -> List[D
         devices = [item for item in devices if item.get("ipaddr")]
         if devices:
             return devices
-    target_ip = str(settings.get("target_device_ip") or "").strip()
+
     for registry in [cfg.get("Devices"), cfg.get("devices")]:
         if target_ip and isinstance(registry, dict) and isinstance(registry.get(target_ip), dict):
             return [_normalise_device_profile(registry[target_ip])]
+
     current = cfg.get("CurrentEQ") if isinstance(cfg, dict) else None
-    return [_normalise_device_profile(current, "current")] if isinstance(current, dict) and (current.get("ipaddr") or current.get("ip_address")) else []
+    if isinstance(current, dict) and (current.get("ipaddr") or current.get("ip_address")):
+        current_ip = str(current.get("ipaddr") or current.get("ip_address") or "").strip()
+        # Не используем старый CurrentEQ, если пользователь явно выбрал другой IP.
+        if not target_ip or current_ip == target_ip:
+            return [_normalise_device_profile(current, "current")]
+
+    return []
 
 
 def _make_title(nodeids: Iterable[str]) -> str:
@@ -310,4 +329,4 @@ def get_test_service() -> TestExecutionService:
 
 _VERBOSE_LINE = re.compile(r"^(?P<nodeid>[^ ]+::[^\s]+?)\s+(?P<status>PASSED|FAILED|ERROR|SKIPPED|XPASS|XFAIL)")
 
-all = ["TestExecutionService", "get_test_service"]
+__all__ = ["TestExecutionService", "get_test_service"]
