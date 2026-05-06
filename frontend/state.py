@@ -6,130 +6,8 @@ import json
 from typing import Any, Dict, List
 
 import streamlit as st
-from MainConnectFunc import CURRENT_EQ_YAML_PATH, json_input
+from MainConnectFunc import json_input
 from frontend.constants import DEFAULT_API_BASE_URL, STATE_FILE
-
-try:
-    import yaml
-except ImportError:  # optional dependency
-    yaml = None
-
-
-def _trim(value: Any) -> str:
-    return "" if value is None else str(value).strip()
-
-
-def _normalise_snmp_type(value: Any) -> str:
-    raw = _trim(value)
-    if not raw:
-        return "SnmpV2"
-    key = raw.lower().replace("_", "").replace("-", "")
-    if key in {"snmpv3", "snmp3", "v3"} or key.endswith("v3") or key.endswith("3"):
-        return "SnmpV3"
-    if key in {"snmpv2", "snmpv2c", "snmp2", "v2", "v2c"} or key.endswith("v2") or key.endswith("2"):
-        return "SnmpV2"
-    return raw
-
-
-def _load_current_eq_profiles() -> Dict[str, Dict[str, Any]]:
-    """Read saved device profiles from CurrentEQ.yaml.
-
-    The file is YAML in normal operation, but JSON is accepted as a fallback
-    because older versions wrote JSON-compatible content into the same file.
-    """
-    if not CURRENT_EQ_YAML_PATH.exists():
-        return {}
-
-    try:
-        text = CURRENT_EQ_YAML_PATH.read_text(encoding="utf-8")
-    except Exception:
-        return {}
-
-    if not text.strip():
-        return {}
-
-    data: Any = None
-    if yaml is not None:
-        try:
-            data = yaml.safe_load(text) or {}
-        except Exception:
-            data = None
-
-    if data is None:
-        try:
-            data = json.loads(text)
-        except Exception:
-            data = {}
-
-    if not isinstance(data, dict):
-        return {}
-
-    profiles = data.get("devices")
-    if not isinstance(profiles, dict):
-        profiles = {}
-
-    # Backward compatibility with the old single-profile shape:
-    # CurrentEQ:
-    #   ipaddr: ...
-    legacy_profile = data.get("CurrentEQ")
-    if isinstance(legacy_profile, dict):
-        legacy_ip = _trim(legacy_profile.get("ipaddr"))
-        if legacy_ip and legacy_ip not in profiles:
-            profiles[legacy_ip] = legacy_profile
-
-    return {str(k): v for k, v in profiles.items() if isinstance(v, dict)}
-
-
-def _profile_to_device_info(profile_id: str, profile: Dict[str, Any]) -> Dict[str, Any]:
-    device_info = dict(profile)
-    profile_ip = _trim(device_info.get("ipaddr")) or _trim(profile_id)
-    if profile_ip:
-        device_info["ipaddr"] = profile_ip
-    device_info["snmp_type"] = _normalise_snmp_type(device_info.get("snmp_type"))
-    return device_info
-
-
-def _sync_loaded_profile_from_yaml() -> None:
-    """Keep Streamlit widget state and device_info aligned after profile load.
-
-    The configuration page writes ip/password/snmp_type when the user clicks
-    "Загрузить профиль". Before this fix, device_info could still contain the
-    previous device and then the UI/test launcher used that stale IP.
-    """
-    selected_profile = _trim(st.session_state.get("selected_device_profile"))
-    if not selected_profile:
-        return
-
-    profiles = _load_current_eq_profiles()
-    profile = profiles.get(selected_profile)
-    if not isinstance(profile, dict):
-        return
-
-    profile_ip = _trim(profile.get("ipaddr")) or selected_profile
-    current_ip = _trim(st.session_state.get("ip_address_input"))
-
-    # Do not override manual edits. Sync only when the current IP already
-    # matches the loaded profile or the selected profile id.
-    if current_ip and current_ip not in {profile_ip, selected_profile}:
-        return
-
-    device_info = _profile_to_device_info(selected_profile, profile)
-    st.session_state["device_info"] = device_info
-    st.session_state["ip_address_input"] = profile_ip
-    st.session_state["password_input"] = _trim(device_info.get("pass"))
-    st.session_state["snmp_type_select"] = _normalise_snmp_type(device_info.get("snmp_type"))
-
-    loopback = device_info.get("loopback")
-    if isinstance(loopback, dict):
-        if "slot" in loopback:
-            st.session_state["slot_loopback"] = loopback.get("slot")
-        if "port" in loopback:
-            st.session_state["port_loopback"] = loopback.get("port")
-        st.session_state["saved_loopback"] = loopback
-
-    active_slots = device_info.get("active_slots")
-    if isinstance(active_slots, dict):
-        st.session_state["active_slots"] = active_slots
 
 
 def _default_viavi_config() -> Dict[str, Dict[str, Dict[str, str]]]:
@@ -154,7 +32,6 @@ def initialize_session_state() -> None:
     st.session_state.setdefault("ip_address_input", "")
     st.session_state.setdefault("password_input", "")
     st.session_state.setdefault("snmp_type_select", "SnmpV2")
-    st.session_state.setdefault("selected_device_profile", "")
     st.session_state.setdefault("test_type_radio", "alarm")
     st.session_state.setdefault("selected_tests", [])
     st.session_state.setdefault("selected_test_labels", [])
@@ -175,7 +52,6 @@ def load_state() -> Dict[str, Any]:
 
 
 def save_state() -> None:
-    _sync_loaded_profile_from_yaml()
     asyncio.run(json_input(["CurrentEQ", "loopback", "slot"], st.session_state.get("slot_loopback", "")))
     asyncio.run(json_input(["CurrentEQ", "loopback", "port"], st.session_state.get("port_loopback", "")))
     state = {
@@ -184,7 +60,6 @@ def save_state() -> None:
         "ip_address_input": st.session_state.get("ip_address_input", ""),
         "password_input": st.session_state.get("password_input", ""),
         "snmp_type_select": st.session_state.get("snmp_type_select", "SnmpV2"),
-        "selected_device_profile": st.session_state.get("selected_device_profile", ""),
         "test_type_radio": st.session_state.get("test_type_radio", "alarm"),
         "viavi_count": st.session_state.get("viavi_count", 1),
         "viavi_config": st.session_state.get("viavi_config", _default_viavi_config()),
@@ -225,7 +100,6 @@ def apply_state() -> None:
         "ip_address_input",
         "password_input",
         "snmp_type_select",
-        "selected_device_profile",
         "test_type_radio",
         "slot_loopback",
         "port_loopback",
