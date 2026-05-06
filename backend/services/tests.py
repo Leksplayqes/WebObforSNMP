@@ -409,7 +409,8 @@ def _generate_job_id() -> str:
     with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\ui_state.json", 'r',
               encoding='utf-8') as js:
         data = json.load(js)
-    return f"{datetime.datetime.now().strftime("%d-%m-%Y %H-%M")} - {data["test_type_radio"]} tests"
+    return f"{datetime.datetime.now():%d-%m-%Y %H-%M-%S} - {data['test_type_radio']} tests"
+
 
 
 def _norm_nodeid(node_id: str) -> str:
