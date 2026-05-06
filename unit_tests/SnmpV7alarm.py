@@ -210,24 +210,24 @@ async def change_traceExpected(slot, portnum, value):
 
 async def create_commutationVC4(slot, port, vc):
     await snmp_set(
-        f"{oids()['switch']['switch_portVC4'][oidsSNMP()['slots_dict'][check_loopback()[0]]] + str(check_loopback()[0]) + '.' + str(oidsSNMP()['loopback']["port"]) + '.1'}",
+        f"{oids()['switch']['switch_portVC4'][oidsSNMP()['slots_dict'][check_loopback()[0]]] + str(check_loopback()[0]) + '.' + str(oidsSNMP()['loopback']['port']) + '.1'}",
         ObjectIdentifier(
             f"{oids()['switch']['data_directionVC4'][oidsSNMP()['slots_dict'][str(slot)]] + str(slot) + f'.{port}' + f'.{vc}'}"))
     await snmp_set(
         f"{oids()['switch']['switch_portVC4'][oidsSNMP()['slots_dict'][str(slot)]] + str(slot) + f'.{port}' + f'.{vc}'}",
         ObjectIdentifier(
-            f"{oids()['switch']['data_directionVC4'][oidsSNMP()['slots_dict'][check_loopback()[0]]] + str(check_loopback()[0]) + '.' + str(oidsSNMP()['loopback']["port"]) + '.1'}"))
+            f"{oids()['switch']['data_directionVC4'][oidsSNMP()['slots_dict'][check_loopback()[0]]] + str(check_loopback()[0]) + '.' + str(oidsSNMP()['loopback']['port']) + '.1'}"))
 
 
 async def create_commutationVC12(slot, port, vc4, vc12):
     await snmp_set(
-        f"{oids()['switch']['switch_portVC12'][oidsSNMP()['slots_dict'][str(check_loopback()[0])]] + str(check_loopback()[0]) + '.' + str(oidsSNMP()['loopback']["port"]) + '.1.1.1.1'}",
+        f"{oids()['switch']['switch_portVC12'][oidsSNMP()['slots_dict'][str(check_loopback()[0])]] + str(check_loopback()[0]) + '.' + str(oidsSNMP()['loopback']['port']) + '.1.1.1.1'}",
         ObjectIdentifier(
             f"{oids()['switch']['data_directionVC12'][oidsSNMP()['slots_dict'][str(slot)]] + str(slot) + f'.{port}' + f'.{vc4}' + f'.{klm_numbers(vc12)}'}"))
     await snmp_set(
         f"{oids()['switch']['switch_portVC12'][oidsSNMP()['slots_dict'][str(slot)]] + str(slot) + f'.{port}' + f'.{vc4}' + f'.{klm_numbers(vc12)}'}",
         ObjectIdentifier(
-            f"{oids()['switch']['data_directionVC12'][oidsSNMP()['slots_dict'][str(check_loopback()[0])]] + str(check_loopback()[0]) + '.' + str(oidsSNMP()['loopback']["port"]) + '.1.1.1.1'}"))
+            f"{oids()['switch']['data_directionVC12'][oidsSNMP()['slots_dict'][str(check_loopback()[0])]] + str(check_loopback()[0]) + '.' + str(oidsSNMP()['loopback']['port']) + '.1.1.1.1'}"))
 
 
 async def create_commutationGE(block, vc4):

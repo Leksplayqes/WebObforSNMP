@@ -161,7 +161,10 @@ async def test_commutationsE1(slot, vc):
     node = next(w for w in OIDS_VIAVI["wiring"] if "STM" in w["dev_interface"])
     v_device, v_port, block = node["viavi_device"], node["viavi_port"], node["viavi_interface"]
     slot_stm, port_stm = int(node["dev_slot"]), int(node["dev_port"])
-    await snmp_set(f"{OIDS["loopbackOID"][OIDS_SNMP["slots_dict"][slot]]}{slot}.{vc}", Integer(1))
+    await snmp_set(
+        f"{OIDS['loopbackOID'][OIDS_SNMP['slots_dict'][slot]]}{slot}.{vc}",
+        Integer(1),
+    )
     VIAVI_secndStage(vc="E1", device_name=v_device, port_name=v_port)
     await delete_commutation()
     await create_commutationE1(slot, vc, slot_stm, port_stm)

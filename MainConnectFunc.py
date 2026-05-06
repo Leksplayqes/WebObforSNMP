@@ -6,27 +6,54 @@ import paramiko
 import re
 import sys
 import os
+from pathlib import Path
 from pysnmp.hlapi.asyncio import (bulk_cmd, SnmpEngine, UsmUserData, UdpTransportTarget, ContextData, ObjectType,
                                   get_cmd, set_cmd,
                                   ObjectIdentity, OctetString)
+try:
+    import yaml
+except ImportError:  # optional dependency
+    yaml = None
+
+
+JSON_DB_PATH = Path("OIDstatusNEW.json")
+YAML_DB_PATH = Path("OIDstatusNEW.yaml")
+CURRENT_EQ_YAML_PATH = Path("CurrentEQ.yaml")
+
+
+def _load_db():
+    if YAML_DB_PATH.exists() and yaml is not None:
+        with open(YAML_DB_PATH, "r", encoding="utf-8") as fh:
+            return yaml.safe_load(fh) or {}
+    with open(JSON_DB_PATH, "r", encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def _write_db(data):
+    with open(JSON_DB_PATH, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=4, ensure_ascii=False)
+    current_eq_payload = {"CurrentEQ": data.get("CurrentEQ", {})}
+    if yaml is not None:
+        with open(YAML_DB_PATH, "w", encoding="utf-8") as fh:
+            yaml.safe_dump(data, fh, allow_unicode=True, sort_keys=False)
+        with open(CURRENT_EQ_YAML_PATH, "w", encoding="utf-8") as fh:
+            yaml.safe_dump(current_eq_payload, fh, allow_unicode=True, sort_keys=False)
+    else:
+        # YAML 1.2 совместим с JSON, поэтому пишем корректный минимальный документ даже без PyYAML.
+        with open(CURRENT_EQ_YAML_PATH, "w", encoding="utf-8") as fh:
+            json.dump(current_eq_payload, fh, indent=2, ensure_ascii=False)
 
 
 def oids():
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        if oid["CurrentEQ"]["name"] != "-":
-            oids = oid[oid["CurrentEQ"]["name"]]
-            return oids
-        else:
-            pass
+    oid = _load_db()
+    if oid["CurrentEQ"]["name"] != "-":
+        return oid[oid["CurrentEQ"]["name"]]
 
 
 
 def oidsSNMP():
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        oidsSNMP = oid["CurrentEQ"]
-        return oidsSNMP
+    oid = _load_db()
+    return oid["CurrentEQ"]
 
 
 def find_KS():
@@ -36,10 +63,8 @@ def find_KS():
 
 
 def oidsVIAVI():
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        oidsVIAVI = oid["VIAVIcontrol"]
-        return oidsVIAVI
+    oid = _load_db()
+    return oid["VIAVIcontrol"]
 
 
 file_lock = asyncio.Lock()
@@ -47,12 +72,7 @@ file_lock = asyncio.Lock()
 
 async def json_input(key_path, new_value):
     async with file_lock:
-        filename = 'OIDstatusNEW.json'
-
-        # Читаем
-        with open(filename, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-
+        data = _load_db()
 
         current = data
         for i, key in enumerate(key_path):
@@ -61,9 +81,7 @@ async def json_input(key_path, new_value):
             else:
                 current[key] = new_value
 
-        # Пишем
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
+        _write_db(data)
 
 
 def run_tunnel(ip, password):
