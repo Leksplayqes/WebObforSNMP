@@ -3,7 +3,6 @@ import asyncio
 import asyncssh
 import threading
 from typing import Tuple, Optional
-from MainConnectFunc import json_input
 
 # ---------- значения по умолчанию ----------
 DEFAULT_DEVICE_IP = ""
@@ -150,11 +149,12 @@ class SnmpSshProxy(asyncio.DatagramProtocol):
         )
 
         sock = self.transport.get_extra_info("socket")
-        ip, port = sock.getsockname()
-        await json_input(["CurrentEQ", "snmp_port"], port)
         if sock:
             self.listen_addr = sock.getsockname()
 
+        # Не пишем snmp_port в глобальный OIDstatusNEW.json отсюда.
+        # Proxy может запускаться параллельно для нескольких test job/device-info,
+        # поэтому порт должен сохранять вызывающий сценарий в свой контекст.
         self._closed.clear()
 
     async def stop(self):
@@ -207,7 +207,6 @@ class ProxyController:
                 except Exception:
                     pass
                 self.proxy = None
-
 
             self.proxy = SnmpSshProxy(
                 ssh_host=ip,
