@@ -14,6 +14,11 @@ from subprocess import PIPE, STDOUT, Popen
 from threading import RLock
 from typing import Any, Dict, Iterable, List
 
+try:
+    import yaml
+except ImportError:  # optional dependency
+    yaml = None
+
 from fastapi import BackgroundTasks, HTTPException
 from shared.catalogs import ALARM_TESTS_CATALOG, COMM_TEST_CATALOG, OTHER_TEST_CATALOG, STAT_TEST_CATALOG, SYNC_TESTS_CATALOG
 
@@ -27,6 +32,7 @@ from .tunnels import TunnelConfigurationError, TunnelManagerError, TunnelPortsBu
 
 JOB_CONTEXT_DIR = REPORT_DIR / "contexts"
 JOB_CONTEXT_DIR.mkdir(parents=True, exist_ok=True)
+CURRENT_EQ_PROFILES_FILE = PROJECT_ROOT / "CurrentEQ.yaml"
 
 
 class TestExecutionService:
@@ -69,7 +75,7 @@ class TestExecutionService:
                 raise HTTPException(
                     status_code=400,
                     detail=(
-                        f"Профиль устройства {target_ip} не найден в Devices. "
+                        f"Профиль устройства {target_ip} не найден. "
                         "Нажмите ‘Проверить подключение’ для выбранного профиля и запустите тесты снова."
                     ),
                 )
@@ -224,6 +230,56 @@ def _write_job_context(path: Path, data: Dict[str, Any]) -> None:
     tmp.replace(path)
 
 
+def _load_profile_registry() -> Dict[str, Any]:
+    """Load the frontend device profile registry from CurrentEQ.yaml.
+
+    The file may contain real YAML (written by MainConnectFunc) or JSON
+    (written by older frontend code). Backend test launch must understand both
+    formats so it can build an immutable per-job snapshot for the selected IP.
+    """
+    if not CURRENT_EQ_PROFILES_FILE.exists():
+        return {}
+    try:
+        text = CURRENT_EQ_PROFILES_FILE.read_text(encoding="utf-8")
+    except Exception:
+        return {}
+    if not text.strip():
+        return {}
+
+    try:
+        data = json.loads(text)
+        if isinstance(data, dict):
+            return data
+    except Exception:
+        pass
+
+    if yaml is not None:
+        try:
+            data = yaml.safe_load(text) or {}
+            if isinstance(data, dict):
+                return data
+        except Exception:
+            pass
+
+    return {}
+
+
+def _profile_from_registry(target_ip: str) -> Dict[str, Any] | None:
+    if not target_ip:
+        return None
+    payload = _load_profile_registry()
+    devices = payload.get("devices") if isinstance(payload, dict) else None
+    if isinstance(devices, dict) and isinstance(devices.get(target_ip), dict):
+        return copy.deepcopy(devices[target_ip])
+
+    current = payload.get("CurrentEQ") if isinstance(payload, dict) else None
+    if isinstance(current, dict):
+        current_ip = str(current.get("ipaddr") or current.get("ip_address") or "").strip()
+        if current_ip == target_ip:
+            return copy.deepcopy(current)
+    return None
+
+
 def _normalise_snmp_type(value: Any) -> str:
     key = str(value or "").strip().lower().replace("_", "").replace("-", "")
     if not key:
@@ -245,6 +301,25 @@ def _normalise_device_profile(item: Dict[str, Any], fallback_name: str = "target
     profile.setdefault("slots_dict", {})
     profile.setdefault("loopback", {})
     profile.setdefault("active_slots", {})
+
+    if not isinstance(profile.get("viavi_config"), dict):
+        viavi_source = profile.get("viavi")
+        if not isinstance(viavi_source, dict):
+            viavi_block = profile.get("VIAVIcontrol")
+            if isinstance(viavi_block, dict):
+                viavi_source = viavi_block.get("settings")
+        if isinstance(viavi_source, dict):
+            profile["viavi_config"] = copy.deepcopy(viavi_source)
+
+    if not isinstance(profile.get("wiring"), list):
+        wiring_source = profile.get("viavi_wiring")
+        if not isinstance(wiring_source, list):
+            viavi_block = profile.get("VIAVIcontrol")
+            if isinstance(viavi_block, dict):
+                wiring_source = viavi_block.get("wiring")
+        if isinstance(wiring_source, list):
+            profile["wiring"] = copy.deepcopy(wiring_source)
+
     return profile
 
 
@@ -252,6 +327,19 @@ def _build_job_context(cfg: Dict[str, Any], selected_device: Dict[str, Any], snm
     context = copy.deepcopy(cfg)
     profile = _normalise_device_profile(selected_device)
     profile["snmp_port"] = int(snmp_port)
+
+    viavi_block = copy.deepcopy(context.get("VIAVIcontrol") if isinstance(context.get("VIAVIcontrol"), dict) else {})
+    if isinstance(profile.get("viavi_config"), dict):
+        viavi_block["settings"] = copy.deepcopy(profile["viavi_config"])
+    if isinstance(profile.get("wiring"), list):
+        viavi_block["wiring"] = copy.deepcopy(profile["wiring"])
+    if viavi_block:
+        context["VIAVIcontrol"] = viavi_block
+        if isinstance(viavi_block.get("settings"), dict):
+            profile["viavi_config"] = copy.deepcopy(viavi_block["settings"])
+        if isinstance(viavi_block.get("wiring"), list):
+            profile["wiring"] = copy.deepcopy(viavi_block["wiring"])
+
     context["CurrentEQ"] = profile
     context.setdefault("Devices", {})
     if profile.get("ipaddr"):
@@ -274,6 +362,10 @@ def _extract_devices(request: TestsRunRequest, cfg: Dict[str, object]) -> List[D
         devices = [item for item in devices if item.get("ipaddr")]
         if devices:
             return devices
+
+    registry_profile = _profile_from_registry(target_ip)
+    if registry_profile:
+        return [_normalise_device_profile(registry_profile)]
 
     for registry in [cfg.get("Devices"), cfg.get("devices")]:
         if target_ip and isinstance(registry, dict) and isinstance(registry.get(target_ip), dict):
