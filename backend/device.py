@@ -128,28 +128,47 @@ async def device_info(
     ip = req.ip_address
     password = req.password or ""
     username = "admin"
-
     lease_key = "device-info"
 
-    def _run_proxy() -> None:
-        try:
-            lease = tunnel_service.reserve(
-                lease_key,
-                "device",
-                ip=ip,
-                username=username,
-                password=password,
-                ttl=15.0,
-                track=True,
-            )
-            add_log(
-                f"SNMP tunnel ready at {lease.host}:{lease.port} for {ip}",
-                "INFO",
-            )
-        except TunnelManagerError as exc:
-            add_log(f"SNMP tunnel reservation failed: {exc}", "ERROR")
-
-    threading.Thread(target=_run_proxy, daemon=True).start()
+    lease = None
+    try:
+        lease = tunnel_service.reserve(
+            lease_key,
+            "device",
+            ip=ip,
+            username=username,
+            password=password,
+            ttl=30.0,
+            track=True,
+        )
+        json_set(["CurrentEQ", "snmp_port"], int(lease.port))
+        add_log(
+            f"SNMP tunnel ready at {lease.host}:{lease.port} for {ip}",
+            "INFO",
+        )
+    except TunnelManagerError as exc:
+        add_log(f"SNMP tunnel reservation failed: {exc}", "ERROR")
+        return {
+            "name": "",
+            "ipaddr": req.ip_address,
+            "slots_dict": {},
+            "viavi": {},
+            "loopback": {},
+            "devices": (ensure_config() or {}).get("Devices", {}) or {},
+            "error": f"SNMP tunnel reservation failed: {exc}",
+        }
+    except Exception as exc:
+        add_log(f"save SNMP tunnel port failed: {exc}", "ERROR")
+        tunnel_service.release(lease_key)
+        return {
+            "name": "",
+            "ipaddr": req.ip_address,
+            "slots_dict": {},
+            "viavi": {},
+            "loopback": {},
+            "devices": (ensure_config() or {}).get("Devices", {}) or {},
+            "error": f"save SNMP tunnel port failed: {exc}",
+        }
 
     try:
         if req.viavi is not None:
@@ -161,7 +180,7 @@ async def device_info(
         if req.loopback is not None:
             payload = {k: v for k, v in req.loopback.model_dump().items() if v is not None}
             if payload:
-                await json_input(["CurrentEQ", "loopback"], payload)
+                json_input(["CurrentEQ", "loopback"], payload)
     except Exception as exc:
         add_log(f"save loopback failed: {exc}", "ERROR")
 
@@ -177,8 +196,8 @@ async def device_info(
         try:
             tunnel_service.release(lease_key)
             add_log("SNMP tunnel for device/info is close")
-        except TunnelManagerError as exc:
-            add_log("Failed to release SNMP tunnel fo device/info")
+        except TunnelManagerError:
+            add_log("Failed to release SNMP tunnel for device/info", "ERROR")
     data = ensure_config()
     current = (data or {}).get("CurrentEQ", {}) or {}
     try:
@@ -230,35 +249,40 @@ async def run_unmask(req: DeviceInfoRequest, tunnel_service: TunnelService = Dep
     ip = req.ip_address
     password = req.password or ""
     username = "admin"
-
     lease_key = "unmask alarm"
 
-    def _run_proxy() -> None:
-        try:
-            lease = tunnel_service.reserve(
-                lease_key,
-                "unmask",
-                ip=ip,
-                username=username,
-                password=password,
-                ttl=900.0,
-                track=True,
-            )
-            add_log(
-                f"SNMP tunnel ready at {lease.host}:{lease.port} for {ip}",
-                "INFO",
-            )
-        except TunnelManagerError as exc:
-            add_log(f"SNMP tunnel reservation failed: {exc}", "ERROR")
+    try:
+        lease = tunnel_service.reserve(
+            lease_key,
+            "unmask",
+            ip=ip,
+            username=username,
+            password=password,
+            ttl=900.0,
+            track=True,
+        )
+        json_set(["CurrentEQ", "snmp_port"], int(lease.port))
+        add_log(
+            f"SNMP tunnel ready at {lease.host}:{lease.port} for {ip}",
+            "INFO",
+        )
+    except TunnelManagerError as exc:
+        add_log(f"SNMP tunnel reservation failed: {exc}", "ERROR")
+        return {"status": "error", "message": str(exc)}
 
-    threading.Thread(target=_run_proxy, daemon=True).start()
     try:
         await alarmplusmask()
         await alarmplusmaslcnctSTM()
         await setSFP_Mode()
-
+        return {"status": "success"}
     except Exception as exc:
         add_log(f"Unmask is failed: {exc}", "ERROR")
+        return {"status": "error", "message": str(exc)}
+    finally:
+        try:
+            tunnel_service.release(lease_key)
+        except TunnelManagerError:
+            pass
 
 
 __all__ = ["router"]
