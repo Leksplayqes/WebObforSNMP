@@ -6,6 +6,7 @@ import paramiko
 import re
 import sys
 import os
+import threading
 from pathlib import Path
 from pysnmp.hlapi.asyncio import (bulk_cmd, SnmpEngine, UsmUserData, UdpTransportTarget, ContextData, ObjectType,
                                   get_cmd, set_cmd,
@@ -180,11 +181,15 @@ def oidsVIAVI():
     return oid["VIAVIcontrol"]
 
 
-file_lock = asyncio.Lock()
+# Streamlit repeatedly calls asyncio.run(...), which creates a fresh event loop
+# for every call. asyncio.Lock is bound to the first loop that awaits it and then
+# crashes on the next Streamlit rerun. A normal thread lock protects the JSON
+# files without being tied to any event loop.
+file_lock = threading.RLock()
 
 
 async def json_input(key_path, new_value):
-    async with file_lock:
+    with file_lock:
         data = _load_db()
 
         current = data
@@ -198,14 +203,11 @@ async def json_input(key_path, new_value):
 
 
 def run_tunnel(ip, password):
-    command = f"ncat -uk -l -c \"exec sshpass -p '{password}' ssh admin@{ip} -p 22 -s snmp\" 127.0.0.1 1161"
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return process
+    raise RuntimeError("Legacy run_tunnel() is disabled. Use backend.services.tunnels.TunnelService instead.")
 
 
 def close_tunnel():
-    command = f"kill `lsof -t -i :1161`"
-    subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    raise RuntimeError("Legacy close_tunnel() is disabled. Use backend.services.tunnels.TunnelService instead.")
 
 
 async def multi_snmp_get(oids: list):
