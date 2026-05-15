@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import json
+from pathlib import Path
 from typing import Any, Dict, List
 import libconf
 import pytest
-from MainConnectFunc import snmp_set, snmp_get, get_full_ssh_output, snmp_multiset, multi_snmp_get
+from MainConnectFunc import (
+    snmp_set,
+    snmp_get,
+    get_full_ssh_output,
+    snmp_multiset,
+    multi_snmp_get,
+    oids,
+    oidsSNMP,
+)
 from pysnmp.hlapi.asyncio import OctetString, Integer
 import re
 from unit_tests.SnmpV7alarm import klm_numbersE1, klm_numbersETH, klm_numbersEth100M
@@ -12,24 +21,17 @@ import paramiko
 import time
 
 # ----------------------------
-# Пути к твоим JSON
-# ----------------------------
-PATH_EQ = r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json"
-PATH_OIDS = r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OsmCategory\OsmCategory.json"
-
-# ----------------------------
 # Загрузка конфигов
 # ----------------------------
+CATEGORY_DB_PATH = Path(__file__).resolve().with_name("OsmCategory.json")
 
-with open(PATH_EQ, "r", encoding="utf-8") as f:
-    EQ_ALL = json.load(f)
-
-with open(PATH_OIDS, "r", encoding="utf-8") as f:
+with CATEGORY_DB_PATH.open("r", encoding="utf-8") as f:
     OID_DB = json.load(f)
-EQ = EQ_ALL["CurrentEQ"]
+
+EQ = oidsSNMP()
 EQ_NAME = EQ["name"]
 SLOTS_DICT: Dict[int, str] = {int(k): v for k, v in EQ["slots_dict"].items()}
-EQ_CURRENT = EQ_ALL[EQ_NAME]
+EQ_CURRENT = oids()
 CATEGORY_BLOCKS_DB = OID_DB["Category"][EQ_NAME]["block"]
 LABEL_BLOCKS_DB = OID_DB["Label"][EQ_NAME]
 MASK_BLOCKS_DB = OID_DB["Mask"][EQ_NAME]
