@@ -6,27 +6,168 @@ import paramiko
 import re
 import sys
 import os
+import threading
+from pathlib import Path
 from pysnmp.hlapi.asyncio import (bulk_cmd, SnmpEngine, UsmUserData, UdpTransportTarget, ContextData, ObjectType,
                                   get_cmd, set_cmd,
                                   ObjectIdentity, OctetString)
+try:
+    import yaml
+except ImportError:  # optional dependency
+    yaml = None
+
+
+JSON_DB_PATH = Path("OIDstatusNEW.json")
+YAML_DB_PATH = Path("OIDstatusNEW.yaml")
+CURRENT_EQ_YAML_PATH = Path("CurrentEQ.yaml")
+JOB_CONTEXT_ENV_NAMES = ("OIDSTATUS_TEST_CONTEXT", "OIDSTATUS_CONTEXT_FILE")
+
+
+def _job_context_path():
+    """Return an optional per-job configuration file used by pytest workers.
+
+    The legacy tests call oids()/oidsSNMP() and json_input(), which historically
+    read and wrote the global OIDstatusNEW.json -> CurrentEQ. Parallel pytest jobs
+    cannot share that mutable CurrentEQ safely. When the backend starts a job it
+    passes a job-specific JSON snapshot through the environment; all reads and
+    writes in this process are then redirected to that snapshot.
+    """
+    for env_name in JOB_CONTEXT_ENV_NAMES:
+        raw = os.getenv(env_name)
+        if raw:
+            return Path(raw)
+    return None
+
+
+def _load_json_file(path):
+    with open(path, "r", encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def _load_db():
+    context_path = _job_context_path()
+    if context_path is not None and context_path.exists():
+        context_data = _load_json_file(context_path)
+        if isinstance(context_data, dict) and "CurrentEQ" in context_data:
+            return context_data
+
+    with open(JSON_DB_PATH, "r", encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def _normalise_snmp_type(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    key = raw.lower().replace("_", "").replace("-", "")
+    if key in {"snmpv3", "snmp3", "v3"} or key.endswith("v3") or key.endswith("3"):
+        return "SnmpV3"
+    if key in {"snmpv2", "snmpv2c", "snmp2", "v2", "v2c"} or key.endswith("v2") or key.endswith("2"):
+        return "SnmpV2"
+    return raw
+
+
+def _normalise_current_eq_profile(profile):
+    if not isinstance(profile, dict):
+        return {}
+    out = dict(profile)
+    snmp_type = _normalise_snmp_type(out.get("snmp_type"))
+    if snmp_type:
+        out["snmp_type"] = snmp_type
+    return out
+
+
+def _load_current_eq_profiles():
+    if not CURRENT_EQ_YAML_PATH.exists():
+        return {}
+
+    try:
+        text = CURRENT_EQ_YAML_PATH.read_text(encoding="utf-8")
+    except Exception:
+        return {}
+
+    if not text.strip():
+        return {}
+
+    if yaml is not None:
+        try:
+            data = yaml.safe_load(text) or {}
+            if isinstance(data, dict):
+                return data
+        except Exception:
+            pass
+
+    try:
+        data = json.loads(text)
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _write_db(data):
+    context_path = _job_context_path()
+    if context_path is not None:
+        context_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(context_path, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=4, ensure_ascii=False)
+        return
+
+    with open(JSON_DB_PATH, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=4, ensure_ascii=False)
+    current_eq = _normalise_current_eq_profile(data.get("CurrentEQ", {}) or {})
+    current_ip = str(current_eq.get("ipaddr", "") or "").strip()
+
+    existing_profiles = _load_current_eq_profiles()
+
+    devices = existing_profiles.get("devices") if isinstance(existing_profiles, dict) else None
+    if not isinstance(devices, dict):
+        devices = {}
+
+    legacy_current_eq = existing_profiles.get("CurrentEQ") if isinstance(existing_profiles, dict) else None
+    if isinstance(legacy_current_eq, dict):
+        legacy_profile = _normalise_current_eq_profile(legacy_current_eq)
+        legacy_ip = str(legacy_profile.get("ipaddr", "") or "").strip()
+        if legacy_ip and legacy_ip not in devices:
+            devices[legacy_ip] = legacy_profile
+
+    devices = {
+        str(device_id): _normalise_current_eq_profile(profile)
+        for device_id, profile in devices.items()
+        if isinstance(profile, dict)
+    }
+    if current_ip:
+        devices[current_ip] = current_eq
+
+    selected_device_id = existing_profiles.get("selected_device_id", "") if isinstance(existing_profiles, dict) else ""
+    if current_ip:
+        selected_device_id = current_ip
+
+    current_eq_payload = {
+        "selected_device_id": selected_device_id,
+        "devices": devices,
+    }
+
+    if yaml is not None:
+        with open(YAML_DB_PATH, "w", encoding="utf-8") as fh:
+            yaml.safe_dump(data, fh, allow_unicode=True, sort_keys=False)
+        with open(CURRENT_EQ_YAML_PATH, "w", encoding="utf-8") as fh:
+            yaml.safe_dump(current_eq_payload, fh, allow_unicode=True, sort_keys=False)
+    else:
+        # YAML 1.2 совместим с JSON, поэтому пишем корректный минимальный документ даже без PyYAML.
+        with open(CURRENT_EQ_YAML_PATH, "w", encoding="utf-8") as fh:
+            json.dump(current_eq_payload, fh, indent=2, ensure_ascii=False)
 
 
 def oids():
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        if oid["CurrentEQ"]["name"] != "-":
-            oids = oid[oid["CurrentEQ"]["name"]]
-            return oids
-        else:
-            pass
+    oid = _load_db()
+    if oid["CurrentEQ"]["name"] != "-":
+        return oid[oid["CurrentEQ"]["name"]]
 
 
 
 def oidsSNMP():
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        oidsSNMP = oid["CurrentEQ"]
-        return oidsSNMP
+    oid = _load_db()
+    return oid["CurrentEQ"]
 
 
 def find_KS():
@@ -36,23 +177,20 @@ def find_KS():
 
 
 def oidsVIAVI():
-    with open(r"C:\Users\mikhailov_gs.SUPERTEL\PycharmProjects\STwebTestingNew\OIDstatusNEW.json", "r") as jsonblock:
-        oid = json.load(jsonblock)
-        oidsVIAVI = oid["VIAVIcontrol"]
-        return oidsVIAVI
+    oid = _load_db()
+    return oid["VIAVIcontrol"]
 
 
-file_lock = asyncio.Lock()
+# Streamlit repeatedly calls asyncio.run(...), which creates a fresh event loop
+# for every call. asyncio.Lock is bound to the first loop that awaits it and then
+# crashes on the next Streamlit rerun. A normal thread lock protects the JSON
+# files without being tied to any event loop.
+file_lock = threading.RLock()
 
 
 async def json_input(key_path, new_value):
-    async with file_lock:
-        filename = 'OIDstatusNEW.json'
-
-        # Читаем
-        with open(filename, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-
+    with file_lock:
+        data = _load_db()
 
         current = data
         for i, key in enumerate(key_path):
@@ -61,20 +199,15 @@ async def json_input(key_path, new_value):
             else:
                 current[key] = new_value
 
-        # Пишем
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
+        _write_db(data)
 
 
 def run_tunnel(ip, password):
-    command = f"ncat -uk -l -c \"exec sshpass -p '{password}' ssh admin@{ip} -p 22 -s snmp\" 127.0.0.1 1161"
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return process
+    raise RuntimeError("Legacy run_tunnel() is disabled. Use backend.services.tunnels.TunnelService instead.")
 
 
 def close_tunnel():
-    command = f"kill `lsof -t -i :1161`"
-    subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    raise RuntimeError("Legacy close_tunnel() is disabled. Use backend.services.tunnels.TunnelService instead.")
 
 
 async def multi_snmp_get(oids: list):

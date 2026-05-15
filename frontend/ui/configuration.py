@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+from pathlib import Path
 import time
 
 from typing import Dict, List, Optional, Tuple
@@ -548,6 +550,25 @@ def render_configuration(client: BackendApiClient) -> None:
 
     with col1:
         st.subheader("Основные настройки")
+        profiles = _load_device_profiles()
+        profile_ids = list(profiles.keys())
+        selected_profile = st.selectbox(
+            "**Профиль устройства**",
+            options=[""] + profile_ids,
+            format_func=lambda x: "Выберите устройство" if x == "" else x,
+            key="selected_device_profile",
+        )
+        if st.button("Загрузить профиль", width='stretch', disabled=selected_profile == ""):
+            profile = profiles.get(selected_profile, {})
+            st.session_state["ip_address_input"] = profile.get("ipaddr", "")
+            st.session_state["password_input"] = profile.get("pass", "")
+            st.session_state["snmp_type_select"] = profile.get("snmp_type", "SnmpV2")
+            loopback = profile.get("loopback") or {}
+            st.session_state["slot_loopback"] = loopback.get("slot")
+            st.session_state["port_loopback"] = loopback.get("port")
+            _flash(f"Профиль {selected_profile} загружен.", "success")
+            save_state()
+            st.rerun()
 
         device = st.session_state.get("device_info") or {}
         ip_default = device.get("ipaddr") or st.session_state.get("ip_address_input", "")
@@ -601,6 +622,18 @@ def render_configuration(client: BackendApiClient) -> None:
                         st.session_state["viavi_config"] = info.viavi
                     if getattr(info, "loopback", None):
                         st.session_state["saved_loopback"] = info.loopback
+                    profile_id = _trim(ip)
+                    if profile_id:
+                        profiles[profile_id] = {
+                            "name": st.session_state.get("device_info", {}).get("name", ""),
+                            "ipaddr": _trim(ip),
+                            "pass": _trim(pw) if pw is not None else "",
+                            "snmp_type": snmp,
+                            "slots_dict": st.session_state.get("device_info", {}).get("slots_dict", {}),
+                            "loopback": loopback,
+                            "active_slots": st.session_state.get("active_slots", {}),
+                        }
+                        _save_device_profiles(profiles, selected_id=profile_id)
                     save_state()
                     _flash("Устройство успешно проверено.", "success")
         can_unmask = _is_valid_ip_like(ip)
@@ -868,3 +901,27 @@ def render_configuration(client: BackendApiClient) -> None:
                 if st.button("Очистить и закрыть консоль", key="close_log_btn"):
                     st.session_state.show_upgrade_log = False
                     st.rerun()
+DEVICE_PROFILES_FILE = Path("CurrentEQ.yaml")
+
+
+def _load_device_profiles() -> Dict[str, Dict]:
+    if not DEVICE_PROFILES_FILE.exists():
+        return {}
+    try:
+        payload = json.loads(DEVICE_PROFILES_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if isinstance(payload, dict) and "devices" in payload:
+        return payload.get("devices") or {}
+    current = payload.get("CurrentEQ") if isinstance(payload, dict) else None
+    if isinstance(current, dict) and current.get("ipaddr"):
+        return {str(current.get("ipaddr")): current}
+    return {}
+
+
+def _save_device_profiles(devices: Dict[str, Dict], selected_id: str = "") -> None:
+    payload = {
+        "selected_device_id": selected_id or "",
+        "devices": devices,
+    }
+    DEVICE_PROFILES_FILE.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
