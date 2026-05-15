@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
+from pathlib import Path
 from typing import Any, Dict, List
 
 import streamlit as st
 from MainConnectFunc import json_input
 from frontend.constants import DEFAULT_API_BASE_URL, STATE_FILE
+
+DEVICE_PROFILES_FILE = Path("CurrentEQ.yaml")
 
 
 def _default_viavi_config() -> Dict[str, Dict[str, Dict[str, str]]]:
@@ -37,30 +41,228 @@ def _normalise_snmp_type(value: Any) -> str:
     return raw
 
 
-def _sync_device_info_from_inputs() -> None:
-    """Do not let stale device_info override a just-loaded profile.
+def _load_device_profiles_payload() -> Dict[str, Any]:
+    """Read the local Streamlit device-profile registry.
 
-    The configuration page uses device_info.ipaddr as the default for the IP
-    field. When a profile is loaded, ip_address_input is changed before the
-    next rerun, but device_info could still contain the previous device. This
-    keeps device_info aligned with the current form values without touching the
-    profile selectbox value.
+    The file is named CurrentEQ.yaml for backwards compatibility, but the
+    existing frontend stores JSON in it.
     """
+
+    if not DEVICE_PROFILES_FILE.exists():
+        return {"selected_device_id": "", "devices": {}}
+    try:
+        payload = json.loads(DEVICE_PROFILES_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {"selected_device_id": "", "devices": {}}
+
+    if isinstance(payload, dict) and isinstance(payload.get("devices"), dict):
+        return payload
+
+    current = payload.get("CurrentEQ") if isinstance(payload, dict) else None
+    if isinstance(current, dict) and current.get("ipaddr"):
+        return {"selected_device_id": str(current.get("ipaddr")), "devices": {str(current.get("ipaddr")): current}}
+
+    return {"selected_device_id": "", "devices": {}}
+
+
+def _get_profile_by_ip(ip: str) -> Dict[str, Any]:
+    ip = str(ip or "").strip()
+    if not ip:
+        return {}
+    payload = _load_device_profiles_payload()
+    devices = payload.get("devices") if isinstance(payload, dict) else {}
+    profile = devices.get(ip) if isinstance(devices, dict) else None
+    return copy.deepcopy(profile) if isinstance(profile, dict) else {}
+
+
+def _write_device_profiles_payload(payload: Dict[str, Any]) -> None:
+    try:
+        DEVICE_PROFILES_FILE.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        # State persistence should not break UI rendering.
+        return
+
+
+def _normalise_viavi_config(value: Any) -> Dict[str, Any]:
+    if not isinstance(value, dict):
+        return _default_viavi_config()
+
+    # Some snapshots may contain the whole VIAVIcontrol block.
+    if isinstance(value.get("settings"), dict):
+        value = value.get("settings") or {}
+
+    out: Dict[str, Any] = {}
+    for name, raw in value.items():
+        if not isinstance(raw, dict):
+            continue
+        typeof = raw.get("typeofport") or {}
+        if not isinstance(typeof, dict):
+            typeof = {}
+        out[str(name)] = {
+            "ipaddr": str(raw.get("ipaddr", "") or ""),
+            "port": raw.get("port", 8006),
+            "typeofport": {
+                "Port1": str(typeof.get("Port1", "") or ""),
+                "Port2": str(typeof.get("Port2", "") or ""),
+            },
+        }
+
+    return out or _default_viavi_config()
+
+
+def _viavi_index_from_name(name: str) -> int | str:
+    suffix = str(name).replace("Num", "", 1)
+    return {"One": 1, "Two": 2, "Three": 3, "Four": 4, "Five": 5}.get(suffix, suffix)
+
+
+def _sync_viavi_widget_keys(viavi: Dict[str, Any]) -> None:
+    for key in list(st.session_state.keys()):
+        if key.startswith("viavi") and (key.endswith("_ip") or key.endswith("_port1") or key.endswith("_port2")):
+            st.session_state.pop(key, None)
+
+    for node_name, node_data in viavi.items():
+        idx = _viavi_index_from_name(node_name)
+        typeof = node_data.get("typeofport") or {}
+        st.session_state[f"viavi{idx}_ip"] = node_data.get("ipaddr", "") or ""
+        st.session_state[f"viavi{idx}_port1"] = typeof.get("Port1", "") or ""
+        st.session_state[f"viavi{idx}_port2"] = typeof.get("Port2", "") or ""
+
+    st.session_state["viavi_count"] = max(1, min(5, len(viavi)))
+
+
+def _normalise_wiring_rows(rows: Any) -> List[Dict[str, str]]:
+    if not isinstance(rows, list):
+        return []
+    cleaned: List[Dict[str, str]] = []
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        dev_slot = item.get("dev_slot") or item.get("dut_slot", "")
+        dev_port = item.get("dev_port") or item.get("dut_port", "")
+        dev_interface = item.get("dev_interface") or item.get("dut_interface", "")
+        cleaned.append(
+            {
+                "viavi_device": str(item.get("viavi_device", "") or ""),
+                "viavi_port": str(item.get("viavi_port", "") or ""),
+                "viavi_interface": str(item.get("viavi_interface", "") or ""),
+                "dev_slot": str(dev_slot or ""),
+                "dev_port": str(dev_port or ""),
+                "dev_interface": str(dev_interface or ""),
+                "cable_id": str(item.get("cable_id", "") or ""),
+            }
+        )
+    return cleaned
+
+
+def _reset_slot_checkboxes(slots: Dict[str, Any], active_slots: Dict[str, Any]) -> None:
+    for key in list(st.session_state.keys()):
+        if str(key).startswith("chk_"):
+            st.session_state.pop(key, None)
+
+    for slot_id in (slots or {}).keys():
+        st.session_state[f"chk_{slot_id}"] = str(slot_id) in {str(k) for k in active_slots.keys()}
+
+
+def _apply_device_profile_to_session(profile: Dict[str, Any], ip: str) -> None:
+    """Atomically apply all device-scoped UI settings from a profile.
+
+    Without this, loading a profile changes only ip/pass/snmp fields and leaves
+    stale slots_dict, active_slots, VIAVI and wiring from the previously selected
+    device in Streamlit session_state.
+    """
+
+    profile = copy.deepcopy(profile) if isinstance(profile, dict) else {}
+    ip = str(profile.get("ipaddr") or ip or "").strip()
+    password = profile.get("pass", profile.get("password", "")) or ""
+    snmp_type = _normalise_snmp_type(profile.get("snmp_type"))
+    slots = profile.get("slots_dict") if isinstance(profile.get("slots_dict"), dict) else {}
+    loopback = profile.get("loopback") if isinstance(profile.get("loopback"), dict) else {}
+    active_slots = profile.get("active_slots") if isinstance(profile.get("active_slots"), dict) else {}
+    viavi = _normalise_viavi_config(profile.get("viavi_config") or profile.get("viavi") or profile.get("VIAVIcontrol"))
+    wiring = _normalise_wiring_rows(profile.get("wiring") or profile.get("viavi_wiring"))
+
+    device_info = copy.deepcopy(profile)
+    device_info["ipaddr"] = ip
+    device_info["pass"] = password
+    device_info["password"] = password
+    device_info["snmp_type"] = snmp_type
+    device_info["slots_dict"] = slots
+    device_info["loopback"] = loopback
+    device_info["active_slots"] = active_slots
+
+    st.session_state["device_info"] = device_info
+    st.session_state["ip_address_input"] = ip
+    st.session_state["password_input"] = password
+    st.session_state["snmp_type_select"] = snmp_type
+    st.session_state["active_slots"] = active_slots
+    st.session_state["saved_loopback"] = loopback
+    st.session_state["slot_loopback"] = loopback.get("slot")
+    st.session_state["port_loopback"] = loopback.get("port")
+    st.session_state["viavi_config"] = viavi
+    st.session_state["wiring"] = wiring
+
+    _sync_viavi_widget_keys(viavi)
+    _reset_slot_checkboxes(slots, active_slots)
+
+
+def _build_minimal_device_info_from_inputs(ip: str, snmp_type: str, password: str) -> Dict[str, Any]:
+    loopback = {}
+    if st.session_state.get("slot_loopback") is not None:
+        loopback["slot"] = st.session_state.get("slot_loopback")
+    if st.session_state.get("port_loopback") is not None:
+        loopback["port"] = st.session_state.get("port_loopback")
+    return {
+        "name": "",
+        "ipaddr": ip,
+        "pass": password,
+        "password": password,
+        "snmp_type": snmp_type,
+        "slots_dict": {},
+        "loopback": loopback,
+        "active_slots": {},
+    }
+
+
+def _sync_device_info_from_inputs() -> None:
+    """Keep device_info aligned with the currently selected profile/form values."""
+
+    ip = str(st.session_state.get("ip_address_input", "") or "").strip()
+    snmp_type = _normalise_snmp_type(st.session_state.get("snmp_type_select"))
+    password = str(st.session_state.get("password_input", "") or "")
     device_info = st.session_state.get("device_info")
+    current_ip = ""
+    if isinstance(device_info, dict):
+        current_ip = str(device_info.get("ipaddr") or "").strip()
+
+    # If the selected IP changed, do not mutate the previous device_info in
+    # place. Load the complete saved profile or create a clean minimal snapshot.
+    if ip and current_ip and current_ip != ip:
+        profile = _get_profile_by_ip(ip)
+        if profile:
+            _apply_device_profile_to_session(profile, ip)
+            return
+        st.session_state["device_info"] = _build_minimal_device_info_from_inputs(ip, snmp_type, password)
+        st.session_state["active_slots"] = {}
+        st.session_state["wiring"] = []
+        _reset_slot_checkboxes({}, {})
+        return
+
+    if ip and not isinstance(device_info, dict):
+        profile = _get_profile_by_ip(ip)
+        if profile:
+            _apply_device_profile_to_session(profile, ip)
+        else:
+            st.session_state["device_info"] = _build_minimal_device_info_from_inputs(ip, snmp_type, password)
+        return
+
     if not isinstance(device_info, dict):
         return
 
-    ip = st.session_state.get("ip_address_input", "")
-    if ip is not None and str(ip).strip():
-        device_info["ipaddr"] = str(ip).strip()
-
-    snmp_type = st.session_state.get("snmp_type_select")
-    if snmp_type is not None:
-        device_info["snmp_type"] = _normalise_snmp_type(snmp_type)
-
-    password = st.session_state.get("password_input")
-    if password is not None:
-        device_info["pass"] = str(password)
+    if ip:
+        device_info["ipaddr"] = ip
+    device_info["snmp_type"] = snmp_type
+    device_info["pass"] = password
+    device_info["password"] = password
 
     loopback = device_info.get("loopback")
     if not isinstance(loopback, dict):
@@ -79,6 +281,38 @@ def _sync_device_info_from_inputs() -> None:
     st.session_state["device_info"] = device_info
 
 
+def _persist_current_profile_snapshot() -> None:
+    ip = str(st.session_state.get("ip_address_input", "") or "").strip()
+    if not ip:
+        return
+
+    payload = _load_device_profiles_payload()
+    devices = payload.setdefault("devices", {})
+    if not isinstance(devices, dict):
+        devices = {}
+        payload["devices"] = devices
+
+    device_info = st.session_state.get("device_info") if isinstance(st.session_state.get("device_info"), dict) else {}
+    current = copy.deepcopy(devices.get(ip, {})) if isinstance(devices.get(ip), dict) else {}
+    current.update(copy.deepcopy(device_info))
+    current["ipaddr"] = ip
+    current["pass"] = str(st.session_state.get("password_input", "") or current.get("pass", "") or "")
+    current["password"] = current["pass"]
+    current["snmp_type"] = _normalise_snmp_type(st.session_state.get("snmp_type_select") or current.get("snmp_type"))
+    current["slots_dict"] = device_info.get("slots_dict") if isinstance(device_info.get("slots_dict"), dict) else current.get("slots_dict", {})
+    current["loopback"] = device_info.get("loopback") if isinstance(device_info.get("loopback"), dict) else {
+        "slot": st.session_state.get("slot_loopback"),
+        "port": st.session_state.get("port_loopback"),
+    }
+    current["active_slots"] = st.session_state.get("active_slots", {}) or {}
+    current["viavi_config"] = copy.deepcopy(st.session_state.get("viavi_config") or _default_viavi_config())
+    current["wiring"] = _normalise_wiring_rows(st.session_state.get("wiring") or [])
+
+    devices[ip] = current
+    payload["selected_device_id"] = ip
+    _write_device_profiles_payload(payload)
+
+
 def initialize_session_state() -> None:
     """Populate frequently used keys in :mod:`streamlit.session_state`."""
     st.session_state.setdefault("api_base_url", DEFAULT_API_BASE_URL)
@@ -92,7 +326,7 @@ def initialize_session_state() -> None:
     st.session_state.setdefault("selected_tests_by_type", _default_selected_tests_map())
     st.session_state.setdefault("current_job_id", None)
     st.session_state.setdefault("viavi_config", _default_viavi_config())
-    st.session_state.setdefault("wiring", [], )
+    st.session_state.setdefault("wiring", [])
     st.session_state.setdefault("active_slots", {})
 
 
@@ -126,10 +360,14 @@ def save_state() -> None:
         "selected_tests_by_type": st.session_state.get(
             "selected_tests_by_type", _default_selected_tests_map()
         ),
+        "selected_test_labels_by_type": st.session_state.get(
+            "selected_test_labels_by_type", _default_selected_tests_map()
+        ),
         "active_slots": st.session_state.get("active_slots", {}),
         "current_job_id": st.session_state.get("current_job_id"),
     }
     STATE_FILE.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+    _persist_current_profile_snapshot()
 
 
 def on_slot_change():
@@ -169,36 +407,8 @@ def apply_state() -> None:
 
     # 3. Динамическая загрузка конфигурации VIAVI
     viavi_saved = saved.get("viavi_config", {})
-    viavi_final = {}
-    # Маппинг для обратной совместимости имен
-    num_map_inv = {"One": 1, "Two": 2, "Three": 3, "Four": 4, "Five": 5}
-
-    if isinstance(viavi_saved, dict):
-        for node_name, node_data in viavi_saved.items():
-            if not isinstance(node_data, dict):
-                continue
-
-            # Определяем индекс для ключей session_state (из NumOne -> 1, из Num3 -> 3)
-            suffix = node_name.replace("Num", "")
-            idx = num_map_inv.get(suffix, suffix)
-
-            # Извлекаем данные прибора
-            ip = node_data.get("ipaddr", "") or ""
-            typeofport_saved = node_data.get("typeofport", {})
-            p1 = typeofport_saved.get("Port1", "") or ""
-            p2 = typeofport_saved.get("Port2", "") or ""
-
-            # Сохраняем в общую структуру
-            viavi_final[node_name] = {
-                "ipaddr": ip,
-                "typeofport": {"Port1": p1, "Port2": p2}
-            }
-
-            # Наполняем session_state для связи с виджетами во вкладках
-            st.session_state[f"viavi{idx}_ip"] = ip
-            st.session_state[f"viavi{idx}_port1"] = p1
-            st.session_state[f"viavi{idx}_port2"] = p2
-
+    viavi_final = _normalise_viavi_config(viavi_saved)
+    _sync_viavi_widget_keys(viavi_final)
     st.session_state["viavi_config"] = viavi_final
 
     # 4. Загрузка тестов (оригинальная логика)
@@ -232,35 +442,13 @@ def apply_state() -> None:
     st.session_state["selected_test_labels"] = labels_by_type.get(current_type, [])
 
     # 5. Загрузка Wiring (оригинальная логика)
-    wiring_saved = saved.get("wiring", [])
-    if isinstance(wiring_saved, list):
-        wiring_clean = []
-        for item in wiring_saved:
-            if not isinstance(item, dict):
-                continue
-            dev_slot = item.get("dev_slot") or item.get("dut_slot", "")
-            dev_port = item.get("dev_port") or item.get("dut_port", "")
-            dev_interface = item.get("dev_interface") or item.get("dut_interface", "")
-
-            wiring_clean.append({
-                "viavi_device": str(item.get("viavi_device", "") or ""),
-                "viavi_port": str(item.get("viavi_port", "") or ""),
-                "viavi_interface": str(item.get("viavi_interface", "") or ""),
-                "dev_slot": str(dev_slot or ""),
-                "dev_port": str(dev_port or ""),
-                "dev_interface": str(dev_interface or ""),
-                "cable_id": str(item.get("cable_id", "") or ""),
-            })
-        st.session_state["wiring"] = wiring_clean
-    else:
-        st.session_state["wiring"] = []
+    st.session_state["wiring"] = _normalise_wiring_rows(saved.get("wiring", []))
 
     # 6. Активные слоты (оригинальная логика)
     active_slots = st.session_state.get("active_slots", {})
     dev = st.session_state.get("device_info")
     if dev and isinstance(dev.get("slots_dict"), dict):
-        for slot_id in dev["slots_dict"].keys():
-            st.session_state[f"chk_{slot_id}"] = str(slot_id) in active_slots
+        _reset_slot_checkboxes(dev["slots_dict"], active_slots)
 
 
 def on_change() -> None:
